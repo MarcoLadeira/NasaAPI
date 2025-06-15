@@ -1,126 +1,159 @@
 import React, { useState } from 'react';
-import { Outlet, useLocation, NavLink as RouterNavLink } from 'react-router-dom';
-import { FaBars, FaTimes, FaGithub } from 'react-icons/fa';
-import { GiSpaceSuit } from "react-icons/gi";
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { HomeIcon, PhotoIcon, GlobeAltIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import ApodPage from './pages/ApodPage';
+import MarsRoverPage from './pages/MarsRoverPage';
+import NeoPage from './pages/NeoPage';
+import EpicPage from './pages/EpicPage';
 
-const NavLink: React.FC<{ to: string; children: React.ReactNode }> = ({ to, children }) => {
+const queryClient = new QueryClient();
+
+const NavLink = ({ to, children }: { to: string; children: React.ReactNode }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
+  
   return (
-    <RouterNavLink
+    <Link
       to={to}
-      className={`py-2 px-4 rounded-md text-sm font-medium transition-colors duration-200
-        ${isActive ? 'bg-nasa-red text-white shadow-md' : 'text-gray-200 hover:text-white hover:bg-gray-700'}
-      `}
+      className={`flex items-center space-x-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300
+        ${isActive 
+          ? 'bg-white/10 text-white shadow-lg shadow-white/5' 
+          : 'text-gray-300 hover:text-white hover:bg-white/5'
+        }`}
     >
       {children}
-    </RouterNavLink>
+    </Link>
   );
 };
 
 const App: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <nav className="bg-nasa-blue shadow-lg sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <RouterNavLink to="/" className="flex items-center space-x-3">
-                <div className="relative w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
-                  <img src="/images/NASA_logo.svg" alt="NASA Logo" className="h-8 w-8" />
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200">
+          <nav className="sticky top-0 z-50 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-b border-gray-700/50 shadow-xl">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16">
+                <div className="flex items-center">
+                  <Link to="/" className="flex items-center space-x-3 group">
+                    <img
+                      src="/images/NASA_logo.svg"
+                      alt="NASA Logo"
+                      className="h-10 w-10 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12"
+                    />
+                    <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 bg-clip-text text-transparent group-hover:from-blue-300 group-hover:to-blue-500 transition-all duration-300">
+                      Explorer
+                    </span>
+                  </Link>
                 </div>
-                <span className="text-white text-xl font-bold tracking-tight">
-                  Nasa Space Explorer <span className="hidden sm:inline-block text-sm opacity-80 ml-2">Discover the Cosmos</span>
-                </span>
-              </RouterNavLink>
+
+                <div className="hidden md:flex items-center space-x-2">
+                  <NavLink to="/">
+                    <HomeIcon className="h-5 w-5" />
+                    <span>APOD</span>
+                  </NavLink>
+                  <NavLink to="/mars-rover">
+                    <PhotoIcon className="h-5 w-5" />
+                    <span>Mars Rover</span>
+                  </NavLink>
+                  <NavLink to="/neo">
+                    <GlobeAltIcon className="h-5 w-5" />
+                    <span>NEO</span>
+                  </NavLink>
+                  <NavLink to="/epic">
+                    <ChartBarIcon className="h-5 w-5" />
+                    <span>EPIC</span>
+                  </NavLink>
+                </div>
+
+                <div className="md:hidden">
+                  <button
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all duration-300"
+                  >
+                    <span className="sr-only">Open main menu</span>
+                    {!isMobileMenuOpen ? (
+                      <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
+                    ) : (
+                      <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div className="hidden md:flex items-center space-x-4">
-              <NavLink to="/apod">APOD</NavLink>
-              <NavLink to="/mars-rover">Mars Rover</NavLink>
-              <NavLink to="/neo">NEO</NavLink>
-              <NavLink to="/epic">EPIC</NavLink>
-              <a
-                href="https://api.nasa.gov/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-4 py-2 px-4 bg-nasa-red text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors duration-200 shadow-md"
-              >
-                Get API Key
-              </a>
-            </div>
+            {isMobileMenuOpen && (
+              <div className="md:hidden animate-fade-in bg-gray-800/95 backdrop-blur-sm border-t border-gray-700/50">
+                <div className="px-2 pt-2 pb-3 space-y-1">
+                  <NavLink to="/">
+                    <HomeIcon className="h-5 w-5" />
+                    <span>APOD</span>
+                  </NavLink>
+                  <NavLink to="/mars-rover">
+                    <PhotoIcon className="h-5 w-5" />
+                    <span>Mars Rover</span>
+                  </NavLink>
+                  <NavLink to="/neo">
+                    <GlobeAltIcon className="h-5 w-5" />
+                    <span>NEO</span>
+                  </NavLink>
+                  <NavLink to="/epic">
+                    <ChartBarIcon className="h-5 w-5" />
+                    <span>EPIC</span>
+                  </NavLink>
+                </div>
+              </div>
+            )}
+          </nav>
 
-            <div className="md:hidden flex items-center">
-              <button
-                onClick={toggleMobileMenu}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-200 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                aria-expanded="false"
-              >
-                <span className="sr-only">Open main menu</span>
-                {isMobileMenuOpen ? (
-                  <FaTimes className="block h-6 w-6" />
-                ) : (
-                  <FaBars className="block h-6 w-6" />
-                )}
-              </button>
+          <main className="flex-grow container mx-auto px-4 py-8">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-6">
+              <Routes>
+                <Route path="/" element={<ApodPage />} />
+                <Route path="/mars-rover" element={<MarsRoverPage />} />
+                <Route path="/neo" element={<NeoPage />} />
+                <Route path="/epic" element={<EpicPage />} />
+              </Routes>
             </div>
-          </div>
+          </main>
+
+          {/* Footer */}
+          <footer className="bg-gray-800 border-t border-gray-700 mt-auto">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+              <div className="flex flex-col md:flex-row justify-between items-center">
+                <div className="flex items-center space-x-2">
+                  <img
+                    src="/images/NASA_logo.svg"
+                    alt="NASA Logo"
+                    className="h-6 w-auto object-contain"
+                  />
+                  <span className="text-sm text-gray-400">
+                    Powered by NASA APIs
+                  </span>
+                </div>
+                <div className="mt-4 md:mt-0">
+                  <a
+                    href="https://api.nasa.gov/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
+                  >
+                    Get your NASA API key
+                  </a>
+                </div>
+              </div>
+            </div>
+          </footer>
         </div>
-
-        {isMobileMenuOpen && (
-          <div className="md:hidden bg-nasa-blue">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              <NavLink to="/apod">APOD</NavLink>
-              <NavLink to="/mars-rover">Mars Rover</NavLink>
-              <NavLink to="/neo">NEO</NavLink>
-              <NavLink to="/epic">EPIC</NavLink>
-              <a
-                href="https://api.nasa.gov/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block py-2 px-3 rounded-md text-base font-medium text-white hover:bg-gray-700"
-              >
-                Get API Key
-              </a>
-            </div>
-          </div>
-        )}
-      </nav>
-
-      <main className="flex-grow">
-        <Outlet />
-      </main>
-
-      <footer className="bg-nasa-blue text-white py-6 mt-8 shadow-inner">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center text-sm">
-          <p className="text-center sm:text-left mb-4 sm:mb-0">&copy; {new Date().getFullYear()} Nasa Space Explorer. All rights reserved.</p>
-          <div className="flex space-x-4">
-            <a
-              href="https://github.com/your-github-username/NasaWebApp_Bounce_Marco"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-300 hover:text-white smooth-transition"
-            >
-              <FaGithub className="inline-block mr-1" /> GitHub
-            </a>
-            <a
-              href="https://api.nasa.gov/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-300 hover:text-white smooth-transition"
-            >
-              Get NASA API Key
-            </a>
-          </div>
-        </div>
-      </footer>
-    </div>
+      </Router>
+    </QueryClientProvider>
   );
 };
 

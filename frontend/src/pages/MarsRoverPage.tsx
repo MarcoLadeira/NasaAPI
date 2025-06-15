@@ -2,7 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import NasaImage from '../components/NasaImage';
-import Spinner from '../components/Spinner';
+import { 
+  RocketLaunchIcon, 
+  CameraIcon, 
+  CalendarIcon,
+  ExclamationTriangleIcon,
+  MapPinIcon,
+  ClockIcon,
+  UserIcon,
+  ArrowPathIcon
+} from '@heroicons/react/24/outline';
 
 interface MarsPhoto {
   id: number;
@@ -61,24 +70,6 @@ const ROVERS: RoverInfo[] = [
     description: 'Searching for signs of ancient life and collecting samples for future return to Earth.',
     image: '/images/perseverance.jpg'
   },
-  {
-    name: 'Spirit',
-    value: 'spirit',
-    status: 'inactive',
-    launchDate: 'June 10, 2003',
-    landingDate: 'January 4, 2004',
-    description: 'Completed its mission in 2010 after getting stuck in soft soil. Operated for 6 years, 2 months, and 19 days.',
-    image: '/images/spirit.jpg'
-  },
-  {
-    name: 'Opportunity',
-    value: 'opportunity',
-    status: 'inactive',
-    launchDate: 'July 7, 2003',
-    landingDate: 'January 25, 2004',
-    description: 'Operated for 14 years, 6 months, and 10 days before losing contact during a global dust storm.',
-    image: '/images/opportunity.jpg'
-  }
 ];
 
 const MarsRoverPage: React.FC = () => {
@@ -118,8 +109,8 @@ const MarsRoverPage: React.FC = () => {
       if (!lastPage?.photos) return undefined;
       return lastPage.photos.length === PHOTOS_PER_PAGE ? lastPage.nextPage : undefined;
     },
-    staleTime: 1000 * 60 * 5, 
-    gcTime: 1000 * 60 * 30, 
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    gcTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
   });
 
   useEffect(() => {
@@ -131,8 +122,8 @@ const MarsRoverPage: React.FC = () => {
 
   const handleRoverChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedRover(e.target.value);
-    setSol(1000); 
-    setSelectedCamera('all'); 
+    setSol(1000); // Reset sol when changing rovers
+    setSelectedCamera('all'); // Reset camera selection
     setCurrentPage(1);
   };
 
@@ -156,20 +147,37 @@ const MarsRoverPage: React.FC = () => {
   const allPhotos = data?.pages.flatMap(page => page?.photos || []) || [];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-6 text-gray-900">Mars Rover Photos</h1>
-        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Rover
-                </label>
+    <div className="space-y-8">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 via-nasa-blue to-gray-900 p-8 text-white shadow-xl space-bg">
+        <div className="relative z-10">
+          <div className="flex items-center space-x-3 mb-2">
+            <RocketLaunchIcon className="h-8 w-8 text-nasa-red" />
+            <h1 className="text-4xl font-bold tracking-tight">Mars Rover Photos</h1>
+          </div>
+          <p className="text-gray-300 mt-2 max-w-2xl">
+            Explore the surface of Mars through the eyes of NASA's rovers. View high-resolution images captured by various cameras on different Martian days (sols).
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Rover Selection and Controls */}
+        <div className="">
+          <div className="flex items-center space-x-2 mb-6">
+            <RocketLaunchIcon className="h-6 w-6 text-nasa-blue" />
+            <h2 className="text-2xl font-bold text-gray-900">Rover Controls</h2>
+          </div>
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Rover
+              </label>
+              <div className="relative">
+                <RocketLaunchIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                 <select
                   value={selectedRover}
                   onChange={handleRoverChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
+                  className="input pl-10"
                 >
                   {ROVERS.map(rover => (
                     <option key={rover.value} value={rover.value}>
@@ -178,26 +186,32 @@ const MarsRoverPage: React.FC = () => {
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Sol (Martian Day)
-                </label>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Sol (Martian Day)
+              </label>
+              <div className="relative">
+                <CalendarIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                 <input
                   type="number"
                   value={sol}
                   onChange={handleSolChange}
                   min="0"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
+                  className="input pl-10"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Camera
-                </label>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Camera
+              </label>
+              <div className="relative">
+                <CameraIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                 <select
                   value={selectedCamera}
                   onChange={handleCameraChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
+                  className="input pl-10"
                 >
                   <option value="all">All Cameras</option>
                   <option value="FHAZ">Front Hazard Avoidance Camera</option>
@@ -212,81 +226,105 @@ const MarsRoverPage: React.FC = () => {
                 </select>
               </div>
             </div>
+          </div>
+        </div>
 
-            <div className="lg:col-span-2">
-              <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                <div className="flex items-start space-x-6">
-                  <div className="w-32 h-32 rounded-lg overflow-hidden flex-shrink-0">
-                    <img
-                      src={selectedRoverInfo.image}
-                      alt={selectedRoverInfo.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                  <div className="flex-grow">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-3">{selectedRoverInfo.name}</h2>
-                    <div className="space-y-3">
-                      <p className="flex items-center">
-                        <span className="font-medium w-24">Status:</span>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          selectedRoverInfo.status === 'active' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {selectedRoverInfo.status}
-                        </span>
-                      </p>
-                      <p className="text-gray-700">
-                        <span className="font-medium">Launch:</span> {selectedRoverInfo.launchDate}
-                      </p>
-                      <p className="text-gray-700">
-                        <span className="font-medium">Landing:</span> {selectedRoverInfo.landingDate}
-                      </p>
-                      <p className="text-gray-600 mt-4">{selectedRoverInfo.description}</p>
+        {/* Rover Information */}
+        <div className="lg:col-span-2">
+          <div className="">
+            <div className="flex items-start space-x-6">
+              <div className="w-32 h-32 rounded-lg overflow-hidden flex-shrink-0 shadow-lg">
+                <img
+                  src={selectedRoverInfo.image}
+                  alt={selectedRoverInfo.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex-grow">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">{selectedRoverInfo.name}</h2>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center space-x-2">
+                      <ArrowPathIcon className="h-5 w-5 text-gray-600" />
+                      <span className="font-medium text-gray-600">Status</span>
                     </div>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      selectedRoverInfo.status === 'active' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {selectedRoverInfo.status}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center space-x-2">
+                      <ClockIcon className="h-5 w-5 text-gray-600" />
+                      <span className="font-medium text-gray-600">Launch Date</span>
+                    </div>
+                    <span className="text-gray-900">{selectedRoverInfo.launchDate}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center space-x-2">
+                      <MapPinIcon className="h-5 w-5 text-gray-600" />
+                      <span className="font-medium text-gray-600">Landing Date</span>
+                    </div>
+                    <span className="text-gray-900">{selectedRoverInfo.landingDate}</span>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <UserIcon className="h-5 w-5 text-blue-600" />
+                      <span className="font-medium text-blue-600">Mission Description</span>
+                    </div>
+                    <p className="text-gray-700">{selectedRoverInfo.description}</p>
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div className="mt-10">
-              {isLoading && <Spinner size="lg" />}
-              {error && <p className="text-red-500 text-center text-lg">Error: {error.message}</p>}
-
-              {!isLoading && !error && allPhotos.length === 0 && (
-                <p className="text-center text-gray-600 text-lg">No photos found for the selected criteria. Try a different Sol or Camera.</p>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {allPhotos.map(photo => (
-                  <div key={photo.id} className="rounded-lg shadow-md overflow-hidden bg-white relative group smooth-transition aspect-square">
-                    <NasaImage 
-                      src={photo.img_src}
-                      alt={`Mars Rover Photo from ${photo.rover.name}`}
-                      title={`Camera: ${photo.camera.full_name}`}
-                      date={`Earth Date: ${photo.earth_date}`}
-                      description={`Sol: ${photo.sol}`}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {hasNextPage && (
-                <div className="flex justify-center mt-8">
-                  <button
-                    onClick={() => fetchNextPage()}
-                    disabled={isFetchingNextPage}
-                    className="nasa-button px-6 py-3 rounded-lg shadow-md text-lg"
-                  >
-                    {isFetchingNextPage ? 'Loading more...' : 'Load More Photos'}
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Photos Grid */}
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="loading-spinner"></div>
+        </div>
+      ) : error ? (
+        <div className="error-container">
+          <ExclamationTriangleIcon className="h-6 w-6 mr-2" />
+          <div>
+            <h2 className="text-xl font-semibold mb-2">Error Loading Photos</h2>
+            <p className="text-sm">Please try again later.</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {allPhotos.map((photo) => (
+              <div key={photo.id} className="overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+                <NasaImage
+                  src={photo.img_src}
+                  alt={`Mars photo taken by ${photo.rover.name} on sol ${photo.sol}`}
+                  title={`${photo.camera.full_name}`}
+                  date={photo.earth_date}
+                  description={`Sol: ${photo.sol}`}
+                />
+              </div>
+            ))}
+          </div>
+          {hasNextPage && (
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={handleLoadMore}
+                disabled={isFetchingNextPage}
+                className="btn-primary"
+              >
+                {isFetchingNextPage ? 'Loading...' : 'Load More Photos'}
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };

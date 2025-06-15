@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { useApod } from '../hooks/useNasaData';
+import { useApod, useApodRange } from '../hooks/useNasaData';
 import NasaImage from '../components/NasaImage';
-import Spinner from '../components/Spinner';
+import { 
+  CalendarIcon, 
+  ExclamationTriangleIcon, 
+  PhotoIcon,
+  ArrowDownTrayIcon,
+  ClockIcon,
+  UserIcon,
+  FilmIcon
+} from '@heroicons/react/24/outline';
 
 const ApodPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const { data: apodData, isLoading, error, refetch } = useApod(selectedDate);
 
+  // Reset to today's APOD when component mounts
   useEffect(() => {
     if (!selectedDate) {
       refetch();
@@ -17,37 +26,34 @@ const ApodPage: React.FC = () => {
     const newDate = e.target.value;
     const today = new Date().toISOString().split('T')[0];
     
+    // If the selected date is today, use empty string to fetch today's APOD
     setSelectedDate(newDate === today ? '' : newDate);
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Spinner size="lg" />
+        <div className="loading-spinner"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg mb-6 flex items-center justify-center">
-          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
-          <div>
-            <h2 className="text-xl font-semibold mb-2">Error Loading APOD</h2>
-            <p className="text-sm">
-              {(error as any)?.response?.data?.details || 'Please try again later.'}
-            </p>
-          </div>
+      <div className="error-container">
+        <ExclamationTriangleIcon className="h-6 w-6 mr-2" />
+        <div>
+          <h2 className="text-xl font-semibold mb-2">Error Loading APOD</h2>
+          <p className="text-sm">
+            {(error as any)?.response?.data?.details || 'Please try again later.'}
+          </p>
         </div>
         <button
           onClick={() => {
             setSelectedDate('');
             refetch();
           }}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="btn-primary mt-4"
         >
           Return to Today's Image
         </button>
@@ -56,54 +62,62 @@ const ApodPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-3xl font-bold text-gray-900">Astronomy Picture of the Day</h1>
-        <div className="flex items-center space-x-4 bg-white p-2 rounded-lg shadow-sm border border-gray-200">
+    <div className="space-y-8">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 via-nasa-blue to-gray-900 p-8 text-white shadow-xl space-bg">
+        <div className="relative z-10">
+          <div className="flex items-center space-x-3 mb-2">
+            <PhotoIcon className="h-8 w-8 text-nasa-red" />
+            <h1 className="text-4xl font-bold tracking-tight">Astronomy Picture of the Day</h1>
+          </div>
+          <p className="text-gray-300 mt-2 max-w-2xl">
+            Discover the cosmos! Each day a different image or photograph of our fascinating universe is featured, along with a brief explanation written by a professional astronomer.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-gray-200/50">
+        <div className="flex items-center space-x-2">
+          <CalendarIcon className="h-5 w-5 text-gray-500" />
           <label htmlFor="date" className="text-sm font-medium text-gray-700">
             Select Date:
           </label>
+        </div>
+        <div className="relative">
+          <CalendarIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
           <input
             type="date"
             id="date"
             value={selectedDate || new Date().toISOString().split('T')[0]}
             onChange={handleDateChange}
             max={new Date().toISOString().split('T')[0]}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="input pl-10"
           />
         </div>
       </div>
 
       {apodData?.data && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            {apodData.data.media_type === 'image' ? (
-              <NasaImage 
-                src={apodData.data.url}
-                alt={apodData.data.title}
-                title={apodData.data.title}
-                description={apodData.data.explanation}
-                date={apodData.data.date}
-              />
-            ) : (
-              <div className="relative mb-6 rounded-lg overflow-hidden w-full" style={{ paddingBottom: '56.25%' }}>
-                <iframe
-                  src={apodData.data.url}
-                  title={apodData.data.title}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="absolute top-0 left-0 w-full h-full"
-                ></iframe>
-              </div>
-            )}
+          <div className="card group hover:scale-[1.02] transition-all duration-300">
+            <NasaImage
+              src={apodData.data.url}
+              alt={apodData.data.title}
+              title={apodData.data.title}
+              description={apodData.data.explanation}
+              date={apodData.data.date}
+            />
           </div>
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Image Details</h2>
+          <div className="card space-y-6">
+            <div className="flex items-center space-x-3 mb-6">
+              <FilmIcon className="h-6 w-6 text-nasa-blue" />
+              <h2 className="text-2xl font-bold text-gray-900">Image Details</h2>
+            </div>
             <dl className="space-y-6">
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Date</dt>
-                <dd className="mt-1 text-sm text-gray-900">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <ClockIcon className="h-5 w-5 text-gray-600" />
+                  <dt className="text-sm font-medium text-gray-600">Date</dt>
+                </div>
+                <dd className="text-sm text-gray-900">
                   {new Date(apodData.data.date).toLocaleDateString(undefined, {
                     year: 'numeric',
                     month: 'long',
@@ -111,31 +125,37 @@ const ApodPage: React.FC = () => {
                   })}
                 </dd>
               </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Copyright</dt>
-                <dd className="mt-1 text-sm text-gray-900">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <UserIcon className="h-5 w-5 text-gray-600" />
+                  <dt className="text-sm font-medium text-gray-600">Copyright</dt>
+                </div>
+                <dd className="text-sm text-gray-900">
                   {apodData.data.copyright || 'Public Domain'}
                 </dd>
               </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Media Type</dt>
-                <dd className="mt-1 text-sm text-gray-900 capitalize">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <PhotoIcon className="h-5 w-5 text-gray-600" />
+                  <dt className="text-sm font-medium text-gray-600">Media Type</dt>
+                </div>
+                <dd className="text-sm text-gray-900 capitalize">
                   {apodData.data.media_type}
                 </dd>
               </div>
               {apodData.data.hdurl && (
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">HD Version</dt>
-                  <dd className="mt-1">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <ArrowDownTrayIcon className="h-5 w-5 text-blue-600" />
+                    <dt className="text-sm font-medium text-blue-600">HD Version</dt>
+                  </div>
+                  <dd>
                     <a
                       href={apodData.data.hdurl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
+                      className="btn-primary text-sm"
                     >
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
                       View HD Image
                     </a>
                   </dd>

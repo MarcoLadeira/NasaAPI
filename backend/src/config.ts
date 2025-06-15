@@ -9,10 +9,8 @@ const nasaApiKey = process.env.NASA_API_KEY || 'DEMO_KEY';
 // Log the API key status (but not the actual key)
 console.log(`NASA API key is ${nasaApiKey === 'DEMO_KEY' ? 'using DEMO_KEY (limited access)' : 'configured'}`);
 
-const config = {
+export const config = {
   nasaApiKey,
   port: process.env.PORT || 3002,
-  environment: process.env.NODE_ENV || 'development',
-};
-
-export default config; 
+  environment: process.env.NODE_ENV || 'development'
+}; 

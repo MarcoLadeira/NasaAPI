@@ -1,6 +1,6 @@
 import express from 'express';
 import axios from 'axios';
-import config from '../config';
+import { config } from '../config';
 
 const router = express.Router();
 
@@ -17,6 +17,8 @@ router.get('/', async (req, res) => {
       return res.status(400).json({ error: 'Date parameter is required' });
     }
 
+    console.log(`Fetching EPIC data for date: ${date}`);
+
     const response = await axios.get(
       `https://api.nasa.gov/EPIC/api/natural/date/${date}`,
       {
@@ -26,6 +28,7 @@ router.get('/', async (req, res) => {
       }
     );
 
+    console.log('Successfully fetched EPIC data');
     res.json(response.data);
   } catch (error: any) {
     console.error('Error fetching EPIC data:', error.message);

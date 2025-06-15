@@ -36,16 +36,18 @@ const NasaImage: React.FC<NasaImageProps> = ({
 
   return (
     <div 
-      className="w-full h-full relative group overflow-hidden rounded-lg"
+      className="w-full h-full relative group overflow-hidden"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Loading state */}
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 animate-pulse">
+        <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-12 h-12 border-4 border-nasa-blue border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
       
+      {/* Image */}
       <img
         src={imageSrc}
         alt={alt}
@@ -54,9 +56,9 @@ const NasaImage: React.FC<NasaImageProps> = ({
         } ${isHovered ? 'scale-105' : 'scale-100'} ${className}`}
         onLoad={() => setIsLoading(false)}
         onError={handleError}
-        loading="lazy"
       />
 
+      {/* Overlay with info */}
       {(title || date || description) && (
         <div 
           className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent 
@@ -64,7 +66,7 @@ const NasaImage: React.FC<NasaImageProps> = ({
                      ${isHovered ? 'opacity-100' : 'opacity-0'}`}
         >
           <div 
-            className={`absolute bottom-0 left-0 right-0 p-4 text-white 
+            className={`absolute bottom-0 left-0 right-0 text-white 
                        transition-all duration-300 ease-in-out
                        ${isHovered ? 'translate-y-0' : 'translate-y-4'}`}
           >
@@ -87,8 +89,9 @@ const NasaImage: React.FC<NasaImageProps> = ({
         </div>
       )}
 
+      {/* Error state */}
       {hasError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 p-4">
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
           <svg 
             className="w-12 h-12 text-gray-400 mb-2" 
             fill="none" 

@@ -2,7 +2,14 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import NasaImage from '../components/NasaImage';
-import Spinner from '../components/Spinner';
+import { 
+  GlobeAltIcon, 
+  CalendarIcon, 
+  ExclamationTriangleIcon,
+  MapPinIcon,
+  PhotoIcon,
+  InformationCircleIcon
+} from '@heroicons/react/24/outline';
 
 interface EpicImage {
   identifier: string;
@@ -31,59 +38,157 @@ const EpicPage: React.FC = () => {
     enabled: !!selectedDate,
   });
 
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedDate(e.target.value);
+  };
+
+  const maxDate = new Date().toISOString().split('T')[0];
+  const minDate = '2015-06-01'; // Assuming the minimum date is June 1, 2015
+
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Spinner size="lg" />
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="loading-spinner"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-8">
-        <p className="text-red-500">Error loading EPIC data. Please try again later.</p>
+      <div className="error-container">
+        <ExclamationTriangleIcon className="h-6 w-6 mr-2" />
+        <div>
+          <h2 className="text-xl font-semibold mb-2">Error Loading EPIC Data</h2>
+          <p className="text-sm">Please try again later.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">Earth Polychromatic Imaging Camera (EPIC)</h1>
-        <p className="text-gray-600 mb-4">
-          View Earth from the DSCOVR satellite's EPIC camera. Select a date to see images from that day.
-        </p>
-        <div className="flex items-center gap-4">
-          <label htmlFor="date" className="text-gray-700">Select Date:</label>
-          <input
-            type="date"
-            id="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            max={new Date().toISOString().split('T')[0]}
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+    <div className="space-y-8">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 via-nasa-blue to-gray-900 p-8 text-white shadow-xl space-bg">
+        <div className="relative z-10">
+          <div className="flex items-center space-x-3 mb-2">
+            <GlobeAltIcon className="h-8 w-8 text-nasa-red" />
+            <h1 className="text-4xl font-bold tracking-tight">Earth Polychromatic Imaging Camera</h1>
+          </div>
+          <p className="text-gray-300 mt-2 max-w-2xl">
+            View stunning images of Earth captured by NASA's EPIC camera aboard the DSCOVR satellite. These images show our planet from a unique perspective in space.
+          </p>
         </div>
       </div>
 
-      {epicData && epicData.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {epicData.map((image) => (
-            <div key={image.identifier} className="bg-white rounded-lg shadow-md overflow-hidden smooth-transition hover:shadow-lg">
-              <NasaImage
-                src={`https://epic.gsfc.nasa.gov/archive/natural/${selectedDate.replace(/-/g, '/')}/png/${image.image}.png`}
-                alt={`Earth from EPIC on ${selectedDate}`}
-                className="w-full h-48 object-cover"
-                title="Earth from Space"
-                date={new Date(image.date).toLocaleString()}
-                description={`Latitude: ${image.centroid_coordinates.lat.toFixed(2)}°N, Longitude: ${image.centroid_coordinates.lon.toFixed(2)}°E`}
-              />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Date Selection */}
+        <div className="p-6">
+          <div className="flex items-center space-x-2 mb-6">
+            <CalendarIcon className="h-6 w-6 text-nasa-blue" />
+            <h2 className="text-2xl font-bold text-gray-900">Select Date</h2>
+          </div>
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Available Date
+              </label>
+              <div className="relative">
+                <CalendarIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={handleDateChange}
+                  max={maxDate}
+                  min={minDate}
+                  className="input pl-10"
+                />
+              </div>
             </div>
-          ))}
+            <div className="p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <InformationCircleIcon className="h-5 w-5 text-blue-600" />
+                <span className="font-medium text-blue-600">About EPIC</span>
+              </div>
+              <p className="text-sm text-gray-700">
+                The Earth Polychromatic Imaging Camera (EPIC) provides a unique perspective of our planet from the Lagrange point 1, approximately 1.5 million kilometers from Earth.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Image Information */}
+        <div className="lg:col-span-2">
+          <div className="p-6">
+            <div className="flex items-center space-x-2 mb-6">
+              <PhotoIcon className="h-6 w-6 text-nasa-blue" />
+              <h2 className="text-2xl font-bold text-gray-900">Image Details</h2>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center space-x-2">
+                  <CalendarIcon className="h-5 w-5 text-gray-600" />
+                  <span className="font-medium text-gray-600">Date</span>
+                </div>
+                <span className="text-gray-900">{selectedDate}</span>
+              </div>
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center space-x-2">
+                  <MapPinIcon className="h-5 w-5 text-gray-600" />
+                  <span className="font-medium text-gray-600">Satellite Position</span>
+                </div>
+                <span className="text-gray-900">Lagrange Point 1</span>
+              </div>
+              <div className="p-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <InformationCircleIcon className="h-5 w-5 text-blue-600" />
+                  <span className="font-medium text-blue-600">About DSCOVR</span>
+                </div>
+                <p className="text-gray-700">
+                  The Deep Space Climate Observatory (DSCOVR) maintains the nation's real-time solar wind monitoring capabilities, which are critical to the accuracy and lead time of space weather alerts and forecasts.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* EPIC Images */}
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="loading-spinner"></div>
+        </div>
+      ) : error ? (
+        <div className="error-container">
+          <ExclamationTriangleIcon className="h-6 w-6 mr-2" />
+          <div>
+            <h2 className="text-xl font-semibold mb-2">Error Loading Images</h2>
+            <p className="text-sm">Please try again later.</p>
+          </div>
+        </div>
+      ) : epicData && epicData.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {epicData.map((image) => {
+            const imageDate = new Date(image.date);
+            const year = imageDate.getFullYear();
+            const month = (imageDate.getMonth() + 1).toString().padStart(2, '0');
+            const day = imageDate.getDate().toString().padStart(2, '0');
+            const imageUrl = `https://epic.gsfc.nasa.gov/archive/natural/${year}/${month}/${day}/png/${image.image}.png`;
+
+            return (
+              <div key={image.identifier} className="overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+                <NasaImage
+                  src={imageUrl}
+                  alt={`Earth from EPIC on ${image.date}`}
+                  title={`Earth from EPIC`}
+                  date={image.date}
+                  description={`Latitude: ${image.centroid_coordinates.lat.toFixed(2)}°, Longitude: ${image.centroid_coordinates.lon.toFixed(2)}°`}
+                />
+              </div>
+            );
+          })}
         </div>
       ) : (
-        <div className="text-center py-8">
+        <div className="p-8 text-center">
+          <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600">No images available for the selected date.</p>
         </div>
       )}
