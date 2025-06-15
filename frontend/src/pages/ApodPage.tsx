@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useApod, useApodRange } from '../hooks/useNasaData';
+import { useApod } from '../hooks/useNasaData';
 import NasaImage from '../components/NasaImage';
 import Spinner from '../components/Spinner';
 
@@ -7,7 +7,6 @@ const ApodPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const { data: apodData, isLoading, error, refetch } = useApod(selectedDate);
 
-  // Reset to today's APOD when component mounts
   useEffect(() => {
     if (!selectedDate) {
       refetch();
@@ -18,7 +17,6 @@ const ApodPage: React.FC = () => {
     const newDate = e.target.value;
     const today = new Date().toISOString().split('T')[0];
     
-    // If the selected date is today, use empty string to fetch today's APOD
     setSelectedDate(newDate === today ? '' : newDate);
   };
 
@@ -79,13 +77,26 @@ const ApodPage: React.FC = () => {
       {apodData?.data && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <NasaImage
-              src={apodData.data.url}
-              alt={apodData.data.title}
-              title={apodData.data.title}
-              description={apodData.data.explanation}
-              date={apodData.data.date}
-            />
+            {apodData.data.media_type === 'image' ? (
+              <NasaImage 
+                src={apodData.data.url}
+                alt={apodData.data.title}
+                title={apodData.data.title}
+                description={apodData.data.explanation}
+                date={apodData.data.date}
+              />
+            ) : (
+              <div className="relative mb-6 rounded-lg overflow-hidden w-full" style={{ paddingBottom: '56.25%' }}>
+                <iframe
+                  src={apodData.data.url}
+                  title={apodData.data.title}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute top-0 left-0 w-full h-full"
+                ></iframe>
+              </div>
+            )}
           </div>
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Image Details</h2>

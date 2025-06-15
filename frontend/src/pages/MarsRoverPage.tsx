@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import NasaImage from '../components/NasaImage';
 import Spinner from '../components/Spinner';
@@ -95,22 +95,21 @@ const MarsRoverPage: React.FC = () => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage
-  } = useInfiniteQuery<MarsPhotosResponse, Error, InfiniteData<MarsPhotosResponse, number>, [string, string, number, string], number>({
+  } = useInfiniteQuery({
     queryKey: ['mars-photos', selectedRover, sol, selectedCamera],
     queryFn: async ({ pageParam = 1 }) => {
-      const currentPageParam = pageParam as number;
       const response = await axios.get(`${API_URL}/api/mars-photos`, {
         params: {
           rover: selectedRover,
           sol,
-          page: currentPageParam,
+          page: pageParam,
           limit: PHOTOS_PER_PAGE,
           camera: selectedCamera !== 'all' ? selectedCamera : undefined
         }
       });
       return {
         photos: response.data.photos || [],
-        nextPage: currentPageParam + 1,
+        nextPage: pageParam + 1,
         total: response.data.total || 0
       };
     },
@@ -119,8 +118,8 @@ const MarsRoverPage: React.FC = () => {
       if (!lastPage?.photos) return undefined;
       return lastPage.photos.length === PHOTOS_PER_PAGE ? lastPage.nextPage : undefined;
     },
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
-    gcTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
+    staleTime: 1000 * 60 * 5, 
+    gcTime: 1000 * 60 * 30, 
   });
 
   useEffect(() => {
@@ -132,8 +131,8 @@ const MarsRoverPage: React.FC = () => {
 
   const handleRoverChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedRover(e.target.value);
-    setSol(1000); // Reset sol when changing rovers
-    setSelectedCamera('all'); // Reset camera selection
+    setSol(1000); 
+    setSelectedCamera('all'); 
     setCurrentPage(1);
   };
 
@@ -154,7 +153,7 @@ const MarsRoverPage: React.FC = () => {
     fetchNextPage();
   };
 
-  const allPhotos = data?.pages.flatMap((page: MarsPhotosResponse) => page?.photos || []) || [];
+  const allPhotos = data?.pages.flatMap(page => page?.photos || []) || [];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -162,7 +161,6 @@ const MarsRoverPage: React.FC = () => {
         <h1 className="text-4xl font-bold mb-6 text-gray-900">Mars Rover Photos</h1>
         <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Rover Selection and Controls */}
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -215,7 +213,6 @@ const MarsRoverPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Rover Information */}
             <div className="lg:col-span-2">
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
                 <div className="flex items-start space-x-6">
@@ -253,7 +250,6 @@ const MarsRoverPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Photos Grid */}
             <div className="mt-10">
               {isLoading && <Spinner size="lg" />}
               {error && <p className="text-red-500 text-center text-lg">Error: {error.message}</p>}
@@ -263,7 +259,7 @@ const MarsRoverPage: React.FC = () => {
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {allPhotos.map((photo: MarsPhoto) => (
+                {allPhotos.map(photo => (
                   <div key={photo.id} className="rounded-lg shadow-md overflow-hidden bg-white relative group smooth-transition aspect-square">
                     <NasaImage 
                       src={photo.img_src}
