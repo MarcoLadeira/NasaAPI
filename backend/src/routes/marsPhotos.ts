@@ -1,65 +1,61 @@
-import express from 'express';
+import { Router, Request, Response } from 'express';
 import axios from 'axios';
 import { config } from '../config';
 
-const router = express.Router();
+const marsPhotosRouter = Router();
 
-router.get('/', async (req, res) => {
+marsPhotosRouter.get('/', async (req: Request, res: Response) => {
+  const { rover, sol, page = 1, limit = 12, camera } = req.query;
+  const nasaApiKey = config.nasaApiKey;
+
+  if (!nasaApiKey) {
+    console.error('NASA_API_KEY is not defined.');
+    return res.status(500).json({ error: 'NASA API key not configured' });
+  }
+
+  if (!rover || !sol) {
+    return res.status(400).json({ error: 'Rover name and Sol are required' });
+  }
+
   try {
-    const { rover, sol, page = 1, limit = 12 } = req.query;
-
-    if (!config.nasaApiKey) {
-      console.error('NASA API key is not configured');
-      return res.status(500).json({ error: 'NASA API key is not configured' });
+    const params: any = {
+      api_key: nasaApiKey,
+      sol: sol,
+      page: page,
+      per_page: limit,
+    };
+    if (camera && camera !== 'all') {
+      params.camera = camera;
     }
-
-    if (!rover || !sol) {
-      return res.status(400).json({ error: 'Rover and sol parameters are required' });
-    }
-
-    console.log(`Fetching Mars photos for rover: ${rover}, sol: ${sol}, page: ${page}, limit: ${limit}`);
 
     const response = await axios.get(
       `https://api.nasa.gov/mars-photos/api/v1/rovers/${rover}/photos`,
-      {
-        params: {
-          sol,
-          api_key: config.nasaApiKey,
-          page,
-          per_page: limit
-        }
-      }
+      { params }
     );
 
-    const photos = response.data.photos || [];
-    const totalPhotos = response.data.total_photos || 0;
-
-    // Remove duplicate photos based on ID
-    const uniquePhotos = photos.reduce((acc: any[], photo: any) => {
-      if (!acc.find((p: any) => p.id === photo.id)) {
-        acc.push(photo);
+    const uniquePhotos = response.data.photos.reduce((acc: any[], current: any) => {
+      const x = acc.find(item => item.id === current.id);
+      if (!x) {
+        return acc.concat([current]);
       }
       return acc;
     }, []);
 
-    console.log(`Found ${uniquePhotos.length} unique photos out of ${photos.length} total photos`);
-
     res.json({
       photos: uniquePhotos,
-      total: totalPhotos,
+      total: response.data.photos.length, // Total photos before unique filter
       page: Number(page),
-      limit: Number(limit)
+      limit: Number(limit),
     });
   } catch (error: any) {
     console.error('Error fetching Mars photos:', error.message);
-    if (error.response?.data) {
-      console.error('NASA API response:', error.response.data);
+    if (error.response) {
+      console.error('NASA API response error:', error.response.data);
+      res.status(error.response.status).json({ error: error.response.data.msg || 'Error fetching Mars photos from NASA' });
+    } else {
+      res.status(500).json({ error: 'Failed to fetch Mars photos' });
     }
-    res.status(error.response?.status || 500).json({
-      error: 'Failed to fetch Mars photos',
-      details: error.response?.data || error.message
-    });
   }
 });
 
-export const marsPhotosRouter = router; 
+export default marsPhotosRouter; 

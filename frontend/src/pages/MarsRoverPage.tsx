@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
 import axios from 'axios';
 import NasaImage from '../components/NasaImage';
-import { Spinner } from '../components/Spinner';
+import Spinner from '../components/Spinner';
 
 interface MarsPhoto {
   id: number;
@@ -22,6 +23,12 @@ interface MarsPhoto {
   };
 }
 
+interface MarsPhotosResponse {
+  photos: MarsPhoto[];
+  nextPage?: number;
+  total?: number;
+}
+
 interface RoverInfo {
   name: string;
   value: string;
@@ -29,6 +36,7 @@ interface RoverInfo {
   launchDate: string;
   landingDate: string;
   description: string;
+  image: string;
 }
 
 const API_URL = 'http://localhost:3002';
@@ -41,7 +49,8 @@ const ROVERS: RoverInfo[] = [
     status: 'active',
     launchDate: 'November 26, 2011',
     landingDate: 'August 6, 2012',
-    description: 'Exploring Gale Crater to study Mars\' climate and geology, and prepare for human exploration.'
+    description: 'Exploring Gale Crater to study Mars\' climate and geology, and prepare for human exploration.',
+    image: '/images/curiosity.jpg'
   },
   {
     name: 'Perseverance',
@@ -49,7 +58,8 @@ const ROVERS: RoverInfo[] = [
     status: 'active',
     launchDate: 'July 30, 2020',
     landingDate: 'February 18, 2021',
-    description: 'Searching for signs of ancient life and collecting samples for future return to Earth.'
+    description: 'Searching for signs of ancient life and collecting samples for future return to Earth.',
+    image: '/images/perseverance.jpg'
   },
   {
     name: 'Spirit',
@@ -57,7 +67,8 @@ const ROVERS: RoverInfo[] = [
     status: 'inactive',
     launchDate: 'June 10, 2003',
     landingDate: 'January 4, 2004',
-    description: 'Completed its mission in 2010 after getting stuck in soft soil. Operated for 6 years, 2 months, and 19 days.'
+    description: 'Completed its mission in 2010 after getting stuck in soft soil. Operated for 6 years, 2 months, and 19 days.',
+    image: '/images/spirit.jpg'
   },
   {
     name: 'Opportunity',
@@ -65,20 +76,52 @@ const ROVERS: RoverInfo[] = [
     status: 'inactive',
     launchDate: 'July 7, 2003',
     landingDate: 'January 25, 2004',
-    description: 'Operated for 14 years, 6 months, and 10 days before losing contact during a global dust storm.'
+    description: 'Operated for 14 years, 6 months, and 10 days before losing contact during a global dust storm.',
+    image: '/images/opportunity.jpg'
   }
 ];
 
-export const MarsRoverPage: React.FC = () => {
+const MarsRoverPage: React.FC = () => {
   const [selectedRover, setSelectedRover] = useState<string>('curiosity');
   const [sol, setSol] = useState<number>(1000);
-  const [photos, setPhotos] = useState<MarsPhoto[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPhotos, setTotalPhotos] = useState<number>(0);
-  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
   const [selectedRoverInfo, setSelectedRoverInfo] = useState<RoverInfo>(ROVERS[0]);
+  const [selectedCamera, setSelectedCamera] = useState<string>('all');
+
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useInfiniteQuery<MarsPhotosResponse, Error, InfiniteData<MarsPhotosResponse, number>, [string, string, number, string], number>({
+    queryKey: ['mars-photos', selectedRover, sol, selectedCamera],
+    queryFn: async ({ pageParam = 1 }) => {
+      const currentPageParam = pageParam as number;
+      const response = await axios.get(`${API_URL}/api/mars-photos`, {
+        params: {
+          rover: selectedRover,
+          sol,
+          page: currentPageParam,
+          limit: PHOTOS_PER_PAGE,
+          camera: selectedCamera !== 'all' ? selectedCamera : undefined
+        }
+      });
+      return {
+        photos: response.data.photos || [],
+        nextPage: currentPageParam + 1,
+        total: response.data.total || 0
+      };
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage?.photos) return undefined;
+      return lastPage.photos.length === PHOTOS_PER_PAGE ? lastPage.nextPage : undefined;
+    },
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    gcTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
+  });
 
   useEffect(() => {
     const rover = ROVERS.find(r => r.value === selectedRover);
@@ -87,74 +130,48 @@ export const MarsRoverPage: React.FC = () => {
     }
   }, [selectedRover]);
 
-  const fetchPhotos = useCallback(async (page: number = 1) => {
-    try {
-      const response = await axios.get(`${API_URL}/api/mars-photos`, {
-        params: {
-          rover: selectedRover,
-          sol,
-          page,
-          limit: PHOTOS_PER_PAGE
-        }
-      });
-
-      if (page === 1) {
-        setPhotos(response.data.photos);
-      } else {
-        setPhotos(prev => [...prev, ...response.data.photos]);
-      }
-      
-      setTotalPhotos(response.data.total);
-      setError(null);
-    } catch (err: any) {
-      console.error('Error fetching photos:', err);
-      setError(err.response?.data?.error || 'Failed to fetch photos');
-    } finally {
-      setLoading(false);
-      setIsLoadingMore(false);
-    }
-  }, [selectedRover, sol]);
-
-  useEffect(() => {
-    setLoading(true);
-    setCurrentPage(1);
-    fetchPhotos(1);
-  }, [selectedRover, sol, fetchPhotos]);
-
-  const handleLoadMore = () => {
-    const nextPage = currentPage + 1;
-    setCurrentPage(nextPage);
-    setIsLoadingMore(true);
-    fetchPhotos(nextPage);
-  };
-
   const handleRoverChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedRover(e.target.value);
     setSol(1000); // Reset sol when changing rovers
+    setSelectedCamera('all'); // Reset camera selection
+    setCurrentPage(1);
   };
 
   const handleSolChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
     if (!isNaN(value) && value >= 0) {
       setSol(value);
+      setCurrentPage(1);
     }
   };
+
+  const handleCameraChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCamera(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleLoadMore = () => {
+    fetchNextPage();
+  };
+
+  const allPhotos = data?.pages.flatMap((page: MarsPhotosResponse) => page?.photos || []) || [];
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">Mars Rover Photos</h1>
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <div className="mb-4">
+        <h1 className="text-4xl font-bold mb-6 text-gray-900">Mars Rover Photos</h1>
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Rover Selection and Controls */}
+            <div className="space-y-6">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Select Rover
                 </label>
                 <select
                   value={selectedRover}
                   onChange={handleRoverChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
                 >
                   {ROVERS.map(rover => (
                     <option key={rover.value} value={rover.value}>
@@ -163,7 +180,7 @@ export const MarsRoverPage: React.FC = () => {
                   ))}
                 </select>
               </div>
-              <div className="mb-4">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Sol (Martian Day)
                 </label>
@@ -172,77 +189,110 @@ export const MarsRoverPage: React.FC = () => {
                   value={sol}
                   onChange={handleSolChange}
                   min="0"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
                 />
               </div>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h2 className="text-xl font-semibold mb-3">{selectedRoverInfo.name}</h2>
-              <div className="space-y-2">
-                <p className="flex items-center">
-                  <span className="font-medium w-24">Status:</span>
-                  <span className={`px-2 py-1 rounded text-sm ${
-                    selectedRoverInfo.status === 'active' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {selectedRoverInfo.status}
-                  </span>
-                </p>
-                <p><span className="font-medium">Launch:</span> {selectedRoverInfo.launchDate}</p>
-                <p><span className="font-medium">Landing:</span> {selectedRoverInfo.landingDate}</p>
-                <p className="text-sm text-gray-600 mt-2">{selectedRoverInfo.description}</p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Camera
+                </label>
+                <select
+                  value={selectedCamera}
+                  onChange={handleCameraChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
+                >
+                  <option value="all">All Cameras</option>
+                  <option value="FHAZ">Front Hazard Avoidance Camera</option>
+                  <option value="RHAZ">Rear Hazard Avoidance Camera</option>
+                  <option value="MAST">Mast Camera</option>
+                  <option value="CHEMCAM">Chemistry and Camera Complex</option>
+                  <option value="MAHLI">Mars Hand Lens Imager</option>
+                  <option value="MARDI">Mars Descent Imager</option>
+                  <option value="NAVCAM">Navigation Camera</option>
+                  <option value="PANCAM">Panoramic Camera</option>
+                  <option value="MINITES">Miniature Thermal Emission Spectrometer</option>
+                </select>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {loading && <Spinner />}
-      
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4">
-          {error}
-        </div>
-      )}
+            {/* Rover Information */}
+            <div className="lg:col-span-2">
+              <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                <div className="flex items-start space-x-6">
+                  <div className="w-32 h-32 rounded-lg overflow-hidden flex-shrink-0">
+                    <img
+                      src={selectedRoverInfo.image}
+                      alt={selectedRoverInfo.name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="flex-grow">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-3">{selectedRoverInfo.name}</h2>
+                    <div className="space-y-3">
+                      <p className="flex items-center">
+                        <span className="font-medium w-24">Status:</span>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          selectedRoverInfo.status === 'active' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {selectedRoverInfo.status}
+                        </span>
+                      </p>
+                      <p className="text-gray-700">
+                        <span className="font-medium">Launch:</span> {selectedRoverInfo.launchDate}
+                      </p>
+                      <p className="text-gray-700">
+                        <span className="font-medium">Landing:</span> {selectedRoverInfo.landingDate}
+                      </p>
+                      <p className="text-gray-600 mt-4">{selectedRoverInfo.description}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-      {!loading && !error && photos.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-500">No photos found for the selected criteria.</p>
-        </div>
-      )}
+            {/* Photos Grid */}
+            <div className="mt-10">
+              {isLoading && <Spinner size="lg" />}
+              {error && <p className="text-red-500 text-center text-lg">Error: {error.message}</p>}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {photos.map((photo, index) => (
-          <div key={`${photo.id}-${index}`} className="bg-white rounded-lg shadow-md overflow-hidden">
-            <NasaImage
-              src={photo.img_src}
-              alt={`Mars photo from ${selectedRoverInfo.name}`}
-              className="w-full h-48 object-cover"
-            />
-            <div className="p-4">
-              <p className="text-sm text-gray-600">
-                Camera: {photo.camera.full_name}
-              </p>
-              <p className="text-sm text-gray-600">
-                Sol: {photo.sol}
-              </p>
+              {!isLoading && !error && allPhotos.length === 0 && (
+                <p className="text-center text-gray-600 text-lg">No photos found for the selected criteria. Try a different Sol or Camera.</p>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {allPhotos.map((photo: MarsPhoto) => (
+                  <div key={photo.id} className="rounded-lg shadow-md overflow-hidden bg-white relative group smooth-transition aspect-square">
+                    <NasaImage 
+                      src={photo.img_src}
+                      alt={`Mars Rover Photo from ${photo.rover.name}`}
+                      title={`Camera: ${photo.camera.full_name}`}
+                      date={`Earth Date: ${photo.earth_date}`}
+                      description={`Sol: ${photo.sol}`}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {hasNextPage && (
+                <div className="flex justify-center mt-8">
+                  <button
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    className="nasa-button px-6 py-3 rounded-lg shadow-md text-lg"
+                  >
+                    {isFetchingNextPage ? 'Loading more...' : 'Load More Photos'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-        ))}
-      </div>
-
-      {!loading && !error && photos.length > 0 && photos.length < totalPhotos && (
-        <div className="mt-8 text-center">
-          <button
-            onClick={handleLoadMore}
-            disabled={isLoadingMore}
-            className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-          >
-            {isLoadingMore ? 'Loading...' : 'Load More Photos'}
-          </button>
         </div>
-      )}
+      </div>
     </div>
   );
-}; 
+};
+
+export default MarsRoverPage; 

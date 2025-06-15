@@ -1,45 +1,48 @@
-import express from 'express';
+import { Router, Request, Response } from 'express';
 import axios from 'axios';
 import { config } from '../config';
 
-const router = express.Router();
+const epicRouter = Router();
 
-router.get('/', async (req, res) => {
+epicRouter.get('/', async (req: Request, res: Response) => {
+  const { date } = req.query;
+  const nasaApiKey = config.nasaApiKey;
+
+  if (!nasaApiKey) {
+    console.error('NASA_API_KEY is not defined in environment variables.');
+    return res.status(500).json({ error: 'NASA API key not configured' });
+  }
+
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = (today.getMonth() + 1).toString().padStart(2, '0');
+  const day = today.getDate().toString().padStart(2, '0');
+
+  let requestDate = date as string || `${year}-${month}-${day}`;
+
   try {
-    const { date } = req.query;
-
-    if (!config.nasaApiKey) {
-      console.error('NASA API key is not configured');
-      return res.status(500).json({ error: 'NASA API key is not configured' });
-    }
-
-    if (!date) {
-      return res.status(400).json({ error: 'Date parameter is required' });
-    }
-
-    console.log(`Fetching EPIC data for date: ${date}`);
-
     const response = await axios.get(
-      `https://api.nasa.gov/EPIC/api/natural/date/${date}`,
-      {
-        params: {
-          api_key: config.nasaApiKey
-        }
-      }
+      `https://api.nasa.gov/EPIC/api/natural/date/${requestDate}?api_key=${nasaApiKey}`
     );
 
-    console.log('Successfully fetched EPIC data');
-    res.json(response.data);
+    const epicData = response.data.map((item: any) => ({
+      identifier: item.identifier,
+      caption: item.caption,
+      image: `https://api.nasa.gov/EPIC/archive/natural/${requestDate.replace(/-/g, '/')}/png/${item.image}.png?api_key=${nasaApiKey}`,
+      date: item.date,
+      coords: item.coords,
+    }));
+
+    res.json(epicData);
   } catch (error: any) {
     console.error('Error fetching EPIC data:', error.message);
-    if (error.response?.data) {
-      console.error('NASA API response:', error.response.data);
+    if (error.response) {
+      console.error('NASA API response error:', error.response.data);
+      res.status(error.response.status).json({ error: error.response.data.msg || 'Error fetching EPIC data from NASA' });
+    } else {
+      res.status(500).json({ error: 'Failed to fetch EPIC data' });
     }
-    res.status(error.response?.status || 500).json({
-      error: 'Failed to fetch EPIC data',
-      details: error.response?.data || error.message
-    });
   }
 });
 
-export const epicRouter = router; 
+export default epicRouter; 
