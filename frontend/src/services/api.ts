@@ -30,6 +30,10 @@ export const nasaApi = {
   // NASA Videos endpoints
   getNasaVideos: (query: string, page: number = 1, limit: number = 10) =>
     api.get('/nasa-videos', { params: { query, page, limit } }),
+
+  // NASA Photos endpoints
+  getNasaPhotos: (q: string, page: number = 1) =>
+    api.get('/nasa-photos', { params: { q, page } }),
 };
 
 export default api; 

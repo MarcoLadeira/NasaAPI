@@ -131,17 +131,12 @@ const EpicPage: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 via-nasa-blue to-gray-900 p-8 text-white shadow-xl space-bg">
-        <div className="relative z-10">
-          <div className="flex items-center space-x-3 mb-2">
-            <GlobeAltIcon className="h-8 w-8 text-nasa-red" />
-            <h1 className="text-4xl font-bold tracking-tight">Earth Polychromatic Imaging Camera</h1>
-          </div>
-          <p className="text-gray-300 mt-2 max-w-2xl">
-            View stunning images of Earth captured by NASA's EPIC camera aboard the DSCOVR satellite. These images show our planet from a unique perspective in space.
-          </p>
+      <header className="bg-nasa-blue text-white p-6 shadow-md">
+        <div className="container mx-auto">
+          <h1 className="text-4xl font-bold mb-2">Earth Polychromatic Imaging Camera</h1>
+          <p className="text-lg opacity-90">View stunning images of Earth captured by NASA's EPIC camera aboard the DSCOVR satellite. These images show our planet from a unique perspective in space.</p>
         </div>
-      </div>
+      </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Date Selection */}

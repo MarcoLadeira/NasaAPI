@@ -7,6 +7,8 @@ import { marsPhotosRouter } from './routes/marsPhotos';
 import { neoRouter } from './routes/neo';
 import { epicRouter } from './routes/epic';
 import { apodRouter } from './routes/apod';
+import { nasaVideosRouter } from './routes/nasaVideos';
+import nasaPhotosRouter from './routes/nasaPhotos';
 
 // Load environment variables
 dotenv.config();
@@ -54,6 +56,8 @@ app.use('/api/mars-photos', marsPhotosRouter);
 app.use('/api/neo', neoRouter);
 app.use('/api/epic', epicRouter);
 app.use('/api/apod', apodRouter);
+app.use('/api/nasa-videos', nasaVideosRouter);
+app.use('/api/nasa-photos', nasaPhotosRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useApod, useApodRange } from '../hooks/useNasaData';
+import { useApod } from '../hooks/useNasaData';
 import NasaImage from '../components/NasaImage';
 import { 
   CalendarIcon, 
@@ -109,6 +109,20 @@ const ApodPage: React.FC = () => {
     setSelectedDate(newDate === today ? '' : newDate);
   };
 
+  // Handle image download
+  const handleDownloadImage = () => {
+    if (apodData?.data?.url && apodData.data.media_type === 'image') {
+      const link = document.createElement('a');
+      link.href = apodData.data.url;
+      link.download = `APOD_${apodData.data.date}.jpg`; // Suggest a filename
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      alert('No image available for download.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -142,17 +156,12 @@ const ApodPage: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <div className="relative overflow-hidden bg-gradient-to-r from-gray-900 via-nasa-blue to-gray-900 text-white space-bg">
-        <div className="relative z-10 p-8">
-          <div className="flex items-center space-x-3 mb-2">
-            <PhotoIcon className="h-8 w-8 text-nasa-red" />
-            <h1 className="text-4xl font-bold tracking-tight">Astronomy Picture of the Day</h1>
-          </div>
-          <p className="text-gray-300 mt-2 max-w-2xl">
-            Discover the cosmos! Each day a different image or photograph of our fascinating universe is featured, along with a brief explanation written by a professional astronomer.
-          </p>
+      <header className="bg-nasa-blue text-white p-6 shadow-md">
+        <div className="container mx-auto">
+          <h1 className="text-4xl font-bold mb-2">Astronomy Picture of the Day</h1>
+          <p className="text-lg opacity-90">Discover the cosmos! Each day a different image or photograph of our fascinating universe is featured, along with a brief explanation written by a professional astronomer.</p>
         </div>
-      </div>
+      </header>
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center space-x-2">
@@ -207,7 +216,7 @@ const ApodPage: React.FC = () => {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
                   <UserIcon className="h-5 w-5 text-gray-600" />
-                  <dt className="text-sm font-medium text-gray-600">Copyright</dt>
+                  <dt className="text-sm font-medium text-gray-600">Credit</dt>
                 </div>
                 <dd className="text-sm text-gray-900">
                   {apodData.data.copyright || 'Public Domain'}
@@ -256,6 +265,19 @@ const ApodPage: React.FC = () => {
                       View HD Image
                     </a>
                   </dd>
+                </div>
+              )}
+
+              {/* Download Button */}
+              {apodData.data.media_type === 'image' && (
+                <div className="mt-6">
+                  <button
+                    onClick={handleDownloadImage}
+                    className="w-full px-4 py-2 bg-nasa-blue text-white rounded-lg hover:bg-nasa-blue/80 transition-colors flex items-center justify-center"
+                  >
+                    <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
+                    Download Image
+                  </button>
                 </div>
               )}
             </dl>

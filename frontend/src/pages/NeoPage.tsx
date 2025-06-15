@@ -152,19 +152,12 @@ const NeoPage: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 via-nasa-blue to-gray-900 p-8 text-white shadow-xl space-bg">
-        <div className="absolute inset-0 bg-gradient-to-br from-black/50 via-nasa-blue/30 to-black/50 opacity-90 mix-blend-overlay"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent"></div>
-        <div className="relative z-10">
-          <div className="flex items-center space-x-3 mb-2">
-            <RocketLaunchIcon className="h-8 w-8 text-nasa-red" />
-            <h1 className="text-4xl font-bold tracking-tight">Near Earth Objects</h1>
-          </div>
-          <p className="text-gray-300 mt-2 max-w-2xl">
-            Track and analyze Near Earth Objects (NEOs) - asteroids and comets that orbit the Sun and come within 1.3 astronomical units of Earth.
-          </p>
+      <header className="bg-nasa-blue text-white p-6 shadow-md">
+        <div className="container mx-auto">
+          <h1 className="text-4xl font-bold mb-2">Near Earth Objects</h1>
+          <p className="text-lg opacity-90">Track and analyze Near Earth Objects (NEOs) - asteroids and comets that orbit the Sun and come within 1.3 astronomical units of Earth.</p>
         </div>
-      </div>
+      </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Date Selection */}

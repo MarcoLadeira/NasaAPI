@@ -4,13 +4,7 @@ import axios from 'axios';
 import NasaImage from '../components/NasaImage';
 import { 
   RocketLaunchIcon, 
-  CameraIcon, 
-  CalendarIcon,
-  ExclamationTriangleIcon,
-  MapPinIcon,
-  ClockIcon,
-  UserIcon,
-  ArrowPathIcon
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
 interface MarsPhoto {
@@ -30,12 +24,6 @@ interface MarsPhoto {
     launch_date: string;
     status: string;
   };
-}
-
-interface MarsPhotosResponse {
-  photos: MarsPhoto[];
-  nextPage?: number;
-  total?: number;
 }
 
 interface RoverInfo {
@@ -73,66 +61,18 @@ const ROVERS: RoverInfo[] = [
 ];
 
 const MarsRoverPage: React.FC = () => {
-  const [selectedRover, setSelectedRover] = useState<string>('curiosity');
-  const [sol, setSol] = useState<number>(1000);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [selectedRoverInfo, setSelectedRoverInfo] = useState<RoverInfo>(ROVERS[0]);
-  const [selectedCamera, setSelectedCamera] = useState<string>('all');
-
-  const getCameraPurpose = (camera: string): string => {
-    switch (camera) {
-      case 'FHAZ': return 'Front Hazard Avoidance Camera: Used for navigation and obstacle detection.';
-      case 'RHAZ': return 'Rear Hazard Avoidance Camera: Used for navigation and obstacle detection.';
-      case 'MAST': return 'Mast Camera: Provides panoramic and stereoscopic images.';
-      case 'CHEMCAM': return 'Chemistry and Camera Complex: Analyzes the chemical composition of rocks and soil.';
-      case 'MAHLI': return 'Mars Hand Lens Imager: Microscopic imaging of rocks and soil.';
-      case 'MARDI': return 'Mars Descent Imager: Captures images during landing.';
-      case 'NAVCAM': return 'Navigation Camera: Used for navigation and broad terrain imaging.';
-      case 'PANCAM': return 'Panoramic Camera: Provides high-resolution panoramic images.';
-      case 'MINITES': return 'Miniature Thermal Emission Spectrometer: Analyzes thermal infrared spectra of surfaces.';
-      case 'all': return 'Displays photos from all available cameras.';
-      default: return 'Select a camera to see its purpose.';
-    }
+  // Load initial preferences from localStorage or use defaults
+  const getInitialRover = () => localStorage.getItem('marsRoverDefaultRover') || 'curiosity';
+  const getInitialSol = () => {
+    const savedSol = localStorage.getItem('marsRoverDefaultSol');
+    return savedSol ? parseInt(savedSol) : 1000;
   };
+  const getInitialCamera = () => localStorage.getItem('marsRoverDefaultCamera') || 'all';
 
-  const getRoverLegacyInsight = (rover: RoverInfo): string => {
-    if (rover.status === 'active') {
-      return `The ${rover.name} rover is currently active, continuing its mission to explore Mars.`
-    } else {
-      switch (rover.name) {
-        case 'Spirit': return 'Spirit\'s mission concluded after getting stuck, but it significantly advanced our understanding of Martian geology.';
-        case 'Opportunity': return 'Opportunity operated far beyond its expected lifespan, revealing incredible insights into Mars\' watery past.';
-        default: return 'This rover has completed its mission, providing valuable data for Mars exploration.';
-      }
-    }
-  };
-
-  // AI-like Feature: Smart Sol Suggestion
-  const getSmartSolSuggestion = (roverName: string): { sol: number; reason: string } => {
-    switch (roverName) {
-      case 'curiosity':
-        return { sol: 1000, reason: 'First discovery of ancient streambed sediments.' };
-      case 'perseverance':
-        return { sol: 50, reason: 'Early operations and first major flight of Ingenuity helicopter.' };
-      default:
-        return { sol: 1, reason: 'First day of operations on Mars.' };
-    }
-  };
-
-  // AI-like Feature: Predicted Photo Count
-  const getPredictedPhotoCount = (roverName: string, sol: number): string => {
-    // This is a simplified heuristic, not actual prediction based on real data patterns
-    if (roverName === 'curiosity') {
-      if (sol < 100) return 'Expected: Low (50-200)';
-      if (sol < 2000) return 'Expected: Medium (200-800)';
-      return 'Expected: High (800+)';
-    } else if (roverName === 'perseverance') {
-      if (sol < 50) return 'Expected: Low (30-150)';
-      if (sol < 500) return 'Expected: Medium (150-600)';
-      return 'Expected: High (600+)';
-    }
-    return 'Expected: Varies';
-  };
+  const [selectedRover, setSelectedRover] = useState<string>(getInitialRover());
+  const [sol, setSol] = useState<number>(getInitialSol());
+  const [selectedRoverInfo, setSelectedRoverInfo] = useState<RoverInfo>(ROVERS.find(r => r.value === getInitialRover()) || ROVERS[0]);
+  const [selectedCamera, setSelectedCamera] = useState<string>(getInitialCamera());
 
   const {
     data,
@@ -168,6 +108,7 @@ const MarsRoverPage: React.FC = () => {
     gcTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
   });
 
+  // Effect to update rover info when selectedRover changes (also on initial load)
   useEffect(() => {
     const rover = ROVERS.find(r => r.value === selectedRover);
     if (rover) {
@@ -175,11 +116,24 @@ const MarsRoverPage: React.FC = () => {
     }
   }, [selectedRover]);
 
+  // Effects to save preferences to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('marsRoverDefaultRover', selectedRover);
+  }, [selectedRover]);
+
+  useEffect(() => {
+    localStorage.setItem('marsRoverDefaultSol', sol.toString());
+  }, [sol]);
+
+  useEffect(() => {
+    localStorage.setItem('marsRoverDefaultCamera', selectedCamera);
+  }, [selectedCamera]);
+
   const handleRoverChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedRover(e.target.value);
+    const newRover = e.target.value;
+    setSelectedRover(newRover);
     setSol(1000); // Reset sol when changing rovers
     setSelectedCamera('all'); // Reset camera selection
-    setCurrentPage(1);
   };
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -194,199 +148,205 @@ const MarsRoverPage: React.FC = () => {
     debounceTimeoutRef.current = setTimeout(() => {
       if (!isNaN(value) && value >= 0) {
         setSol(value);
-        setCurrentPage(1);
       }
     }, 500); // Debounce for 500ms
   }, []);
 
   const handleCameraChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedCamera(e.target.value);
-    setCurrentPage(1);
+  };
+
+  // New functions for explicit preference management
+  const saveCurrentPreferences = () => {
+    localStorage.setItem('marsRoverDefaultRover', selectedRover);
+    localStorage.setItem('marsRoverDefaultSol', sol.toString());
+    localStorage.setItem('marsRoverDefaultCamera', selectedCamera);
+    alert('Your preferences have been saved!');
+  };
+
+  const resetPreferences = () => {
+    localStorage.removeItem('marsRoverDefaultRover');
+    localStorage.removeItem('marsRoverDefaultSol');
+    localStorage.removeItem('marsRoverDefaultCamera');
+    // Reset state to default values after clearing localStorage
+    setSelectedRover('curiosity');
+    setSol(1000);
+    setSelectedCamera('all');
+    alert('Your preferences have been reset to default.');
   };
 
   const handleLoadMore = () => {
-    fetchNextPage();
+    if (hasNextPage) {
+      fetchNextPage();
+    }
   };
 
-  const allPhotos = data?.pages.flatMap(page => page?.photos || []) || [];
+  const handleDownloadPhoto = (e: React.MouseEvent, imageUrl: string, photoId: number) => {
+    e.preventDefault(); // Prevent default link behavior if inside an anchor tag
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = `mars_photo_${photoId}.jpg`; // Suggest a filename
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="loading-spinner"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
+        <h2 className="text-2xl font-bold mt-4 mb-2">Error Loading Mars Rover Photos</h2>
+        <p className="text-gray-600 mb-4">
+          {(error as any)?.response?.data?.details || 'Failed to fetch photos. Please try again later.'}
+        </p>
+        <button
+          onClick={() => window.location.reload()} // Simple refresh for now
+          className="btn-primary"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  // Get all photos from all pages
+  const allPhotos = data?.pages.flatMap(page => page.photos) || [];
 
   return (
-    <div className="space-y-8">
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 via-nasa-blue to-gray-900 p-8 text-white shadow-xl space-bg">
-        <div className="relative z-10">
+    <div className="space-y-12 pb-16">
+      {/* Hero Section */}
+      <header className="bg-nasa-blue text-white p-6 shadow-md">
+        <div className="container mx-auto">
           <div className="flex items-center space-x-3 mb-2">
-            <RocketLaunchIcon className="h-8 w-8 text-nasa-red" />
-            <h1 className="text-4xl font-bold tracking-tight">Mars Rover Photos</h1>
+            <RocketLaunchIcon className="h-8 w-8 text-white" />
+            <h1 className="text-4xl font-bold mb-2">Mars Rover Photos</h1>
           </div>
-          <p className="text-gray-300 mt-2 max-w-2xl">
-            Explore the surface of Mars through the eyes of NASA's rovers. View high-resolution images captured by various cameras on different Martian days (sols).
+          <p className="text-lg opacity-90 mb-6">
+            Explore the Martian landscape through the eyes of NASA's active rovers. Dive into a vast collection of raw and processed images, offering unique perspectives from the surface of the Red Planet.
           </p>
+          <div className="bg-nasa-blue/50 p-4 rounded-lg flex items-center space-x-3">
+            <span className="text-white font-semibold">Current Rover:</span>
+            <span className="text-white text-lg font-bold">{selectedRoverInfo.name}</span>
+            <span className="text-white opacity-80">({selectedRoverInfo.status})</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Filters and Controls */}
+      <div className="bg-white p-6 rounded-lg shadow-md grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+        <div>
+          <label htmlFor="rover-select" className="block text-gray-700 text-sm font-bold mb-2">Select Rover:</label>
+          <select
+            id="rover-select"
+            value={selectedRover}
+            onChange={handleRoverChange}
+            className="input-field"
+          >
+            {ROVERS.map(rover => (
+              <option key={rover.value} value={rover.value}>
+                {rover.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="sol-input" className="block text-gray-700 text-sm font-bold mb-2">Martian Sol (Day):</label>
+          <input
+            type="number"
+            id="sol-input"
+            value={sol}
+            onChange={handleSolChange}
+            min="1"
+            className="input-field"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="camera-select" className="block text-gray-700 text-sm font-bold mb-2">Select Camera:</label>
+          <select
+            id="camera-select"
+            value={selectedCamera}
+            onChange={handleCameraChange}
+            className="input-field"
+          >
+            <option value="all">All Cameras</option>
+            {selectedRover === 'curiosity' && (
+              <>
+                <option value="FHAZ">FHAZ (Front Hazard Avoidance Camera)</option>
+                <option value="RHAZ">RHAZ (Rear Hazard Avoidance Camera)</option>
+                <option value="MAST">MAST (Mast Camera)</option>
+                <option value="CHEMCAM">CHEMCAM (Chemistry and Camera Complex)</option>
+                <option value="MAHLI">MAHLI (Mars Hand Lens Imager)</option>
+                <option value="MARDI">MARDI (Mars Descent Imager)</option>
+                <option value="NAVCAM">NAVCAM (Navigation Camera)</option>
+              </>
+            )}
+            {selectedRover === 'perseverance' && (
+              <>
+                <option value="FHAZ">FHAZ (Front Hazard Avoidance Camera)</option>
+                <option value="RHAZ">RHAZ (Rear Hazard Avoidance Camera)</option>
+                <option value="NAVCAM">NAVCAM (Navigation Camera)</option>
+                <option value="MAST">MAST (Mastcam-Z)</option>
+                <option value="CHEMCAM">CHEMCAM (SuperCam Remote Micro-Imager)</option>
+                <option value="SHERLOC_WATSON">SHERLOC_WATSON (SHERLOC Watson Camera)</option>
+              </>
+            )}
+          </select>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Rover Selection and Controls */}
-        <div className="">
-          <div className="flex items-center space-x-2 mb-6">
-            <RocketLaunchIcon className="h-6 w-6 text-nasa-blue" />
-            <h2 className="text-2xl font-bold text-gray-900">Rover Controls</h2>
-          </div>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Rover
-              </label>
-              <select
-                value={selectedRover}
-                onChange={handleRoverChange}
-                className="input"
-              >
-                {ROVERS.map((rover) => (
-                  <option key={rover.value} value={rover.value}>
-                    {rover.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Martian Day (Sol)
-              </label>
-              <div className="relative">
-                <CalendarIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                <input
-                  type="number"
-                  value={sol}
-                  onChange={handleSolChange}
-                  min="0"
-                  className="input pl-10"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Camera
-              </label>
-              <select
-                value={selectedCamera}
-                onChange={handleCameraChange}
-                className="input"
-              >
-                <option value="all">All Cameras</option>
-                <option value="FHAZ">Front Hazard Avoidance Camera</option>
-                <option value="RHAZ">Rear Hazard Avoidance Camera</option>
-                <option value="MAST">Mast Camera</option>
-                <option value="CHEMCAM">Chemistry and Camera Complex</option>
-                <option value="MAHLI">Mars Hand Lens Imager</option>
-                <option value="MARDI">Mars Descent Imager</option>
-                <option value="NAVCAM">Navigation Camera</option>
-                <option value="PANCAM">Panoramic Camera</option>
-                <option value="MINITES">Miniature Thermal Emission Spectrometer</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Rover Information */}
-        <div className="lg:col-span-2">
-          <div className="">
-            <div className="flex items-start space-x-6">
-              <div className="w-32 h-32 rounded-lg overflow-hidden flex-shrink-0 shadow-lg">
-                <img
-                  src={selectedRoverInfo.image}
-                  alt={selectedRoverInfo.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="flex-grow">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">{selectedRoverInfo.name}</h2>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4">
-                    <div className="flex items-center space-x-2">
-                      <ArrowPathIcon className="h-5 w-5 text-gray-600" />
-                      <span className="font-medium text-gray-600">Status</span>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      selectedRoverInfo.status === 'active' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {selectedRoverInfo.status}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-700 mt-2 italic">
-                    {getRoverLegacyInsight(selectedRoverInfo)}
-                  </p>
-                  <div className="flex items-center justify-between p-4">
-                    <div className="flex items-center space-x-2">
-                      <ClockIcon className="h-5 w-5 text-gray-600" />
-                      <span className="font-medium text-gray-600">Launch Date</span>
-                    </div>
-                    <span className="text-gray-900">{selectedRoverInfo.launchDate}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-4">
-                    <div className="flex items-center space-x-2">
-                      <MapPinIcon className="h-5 w-5 text-gray-600" />
-                      <span className="font-medium text-gray-600">Landing Date</span>
-                    </div>
-                    <span className="text-gray-900">{selectedRoverInfo.landingDate}</span>
-                  </div>
-                  <div className="p-4">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <UserIcon className="h-5 w-5 text-blue-600" />
-                      <span className="font-medium text-blue-600">Mission Description</span>
-                    </div>
-                    <p className="text-gray-700">{selectedRoverInfo.description}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Preferences Section */}
+      <div className="bg-white p-6 rounded-lg shadow-md flex justify-end space-x-4">
+        <button onClick={saveCurrentPreferences} className="btn-secondary">
+          Save Preferences
+        </button>
+        <button onClick={resetPreferences} className="btn-secondary-outline">
+          Reset Preferences
+        </button>
       </div>
 
-      {/* Photos Grid */}
-      {isLoading ? (
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="loading-spinner"></div>
-        </div>
-      ) : error ? (
-        <div className="error-container">
-          <ExclamationTriangleIcon className="h-6 w-6 mr-2" />
-          <div>
-            <h2 className="text-xl font-semibold mb-2">Error Loading Photos</h2>
-            <p className="text-sm">Please try again later.</p>
-          </div>
+      {/* Photo Grid */}
+      {allPhotos.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {allPhotos.map(photo => (
+            <NasaImage
+              key={photo.id}
+              src={photo.img_src}
+              alt={`Mars Rover Photo from ${photo.rover.name} - Sol ${photo.sol} - Camera ${photo.camera.name}`}
+              title={`Photo by ${photo.rover.name}'s ${photo.camera.full_name}`}
+              date={photo.earth_date}
+              onDownload={(e: React.MouseEvent<HTMLButtonElement>) => handleDownloadPhoto(e, photo.img_src, photo.id)}
+              media_type="image"
+            />
+          ))}
         </div>
       ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {allPhotos.map((photo) => (
-              <div key={photo.id} className="overflow-hidden group hover:scale-[1.02] transition-all duration-300">
-                <NasaImage
-                  src={photo.img_src}
-                  alt={`Mars photo taken by ${photo.rover.name} on sol ${photo.sol}`}
-                  title={`${photo.camera.full_name}`}
-                  date={photo.earth_date}
-                  description={`Sol: ${photo.sol}`}
-                />
-              </div>
-            ))}
-          </div>
-          {hasNextPage && (
-            <div className="flex justify-center mt-8">
-              <button
-                onClick={handleLoadMore}
-                disabled={isFetchingNextPage}
-                className="btn-primary"
-              >
-                {isFetchingNextPage ? 'Loading...' : 'Load More Photos'}
-              </button>
-            </div>
-          )}
-        </>
+        <div className="text-center py-12 text-gray-600">
+          <p className="text-lg">No photos found for the selected criteria.</p>
+          <p className="text-md">Try adjusting the Sol (Martian day) or camera filter.</p>
+        </div>
+      )}
+
+      {/* Load More Button */}
+      {hasNextPage && (
+        <div className="text-center mt-8">
+          <button
+            onClick={handleLoadMore}
+            disabled={isFetchingNextPage}
+            className="btn-primary px-8 py-3 text-lg"
+          >
+            {isFetchingNextPage ? 'Loading more...' : 'Load More Photos'}
+          </button>
+        </div>
       )}
     </div>
   );

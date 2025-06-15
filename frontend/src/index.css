@@ -26,9 +26,7 @@
   }
 
   .btn-primary {
-    @apply btn bg-nasa-blue text-white hover:bg-blue-700 
-           focus:ring-nasa-blue shadow-md hover:shadow-lg
-           hover:bg-gradient-to-r hover:from-nasa-blue hover:to-blue-700;
+    @apply px-6 py-3 bg-nasa-blue text-white rounded-lg hover:bg-blue-700 transition-colors;
   }
 
   .btn-secondary {
@@ -272,4 +270,96 @@
 .page-exit-active {
   opacity: 0;
   transform: translateY(-20px);
+}
+
+@layer utilities {
+  .animate-slow-zoom {
+    animation: slow-zoom 20s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-float-slow {
+    animation: float-slow 8s ease-in-out infinite;
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.6s ease-out forwards;
+  }
+
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+}
+
+@keyframes slow-zoom {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom hover scale */
+.hover\:scale-102:hover {
+  transform: scale(1.02);
+}
+
+/* Custom shadow color */
+.shadow-nasa-blue\/50 {
+  box-shadow: 0 0 30px rgba(11, 61, 145, 0.5);
+}
+
+/* Custom text color */
+.text-nasa-blue {
+  color: var(--nasa-blue);
+}
+
+/* Custom background color */
+.bg-nasa-blue {
+  background-color: var(--nasa-blue);
+}
+
+/* Custom hover background color */
+.hover\:bg-nasa-blue\/90:hover {
+  background-color: rgba(11, 61, 145, 0.9);
 }

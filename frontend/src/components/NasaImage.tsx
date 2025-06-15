@@ -1,4 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
+import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
 interface NasaImageProps {
   src: string;
@@ -7,6 +8,8 @@ interface NasaImageProps {
   title?: string;
   date?: string;
   description?: string;
+  onDownload?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  media_type?: string;
 }
 
 const NasaImage: React.FC<NasaImageProps> = memo(({
@@ -15,7 +18,8 @@ const NasaImage: React.FC<NasaImageProps> = memo(({
   className = '',
   title,
   date,
-  description
+  description,
+  onDownload
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -36,7 +40,7 @@ const NasaImage: React.FC<NasaImageProps> = memo(({
 
   return (
     <div 
-      className="w-full h-full relative group overflow-hidden"
+      className="w-full relative group overflow-hidden"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -58,17 +62,17 @@ const NasaImage: React.FC<NasaImageProps> = memo(({
         onError={handleError}
       />
 
-      {/* Overlay with info */}
-      {(title || date || description) && (
+      {/* Overlay with info and download button */}
+      {(title || date || description || onDownload) && (
         <div 
           className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent 
                      transition-all duration-300 ease-in-out
-                     ${isHovered ? 'opacity-100' : 'opacity-0'}`}
+                     ${isHovered ? 'opacity-100' : 'opacity-0'} flex flex-col justify-end`}
         >
           <div 
-            className={`absolute bottom-0 left-0 right-0 text-white 
+            className={`relative p-4 text-white 
                        transition-all duration-300 ease-in-out
-                       ${isHovered ? 'translate-y-0' : 'translate-y-4'}`}
+                       ${isHovered ? 'translate-y-0' : 'translate-y-full'}`}
           >
             {title && (
               <h3 className="text-lg font-semibold mb-1 text-white">
@@ -81,9 +85,17 @@ const NasaImage: React.FC<NasaImageProps> = memo(({
               </p>
             )}
             {description && (
-              <p className="text-sm text-gray-300">
+              <p className="text-sm text-gray-300 mb-4">
                 {description}
               </p>
+            )}
+            {onDownload && (
+              <button
+                onClick={onDownload}
+                className="w-full flex items-center justify-center px-4 py-2 bg-nasa-blue text-white rounded-lg hover:bg-nasa-blue/80 transition-colors"
+              >
+                <ArrowDownTrayIcon className="h-5 w-5 mr-2" /> Download
+              </button>
             )}
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
 import { nasaApi } from '../services/api';
 
 export const useApod = (date?: string) => {
@@ -50,5 +50,47 @@ export const useNasaVideos = (query: string, page: number = 1, limit: number = 1
     queryKey: ['nasa-videos', query, page, limit],
     queryFn: () => nasaApi.getNasaVideos(query, page, limit),
     enabled: !!query,
+  });
+};
+
+interface NasaPhoto {
+  nasa_id: string;
+  title: string;
+  description: string;
+  date_created: string;
+  center: string;
+  photographer?: string;
+  keywords?: string[];
+  thumbnail_url: string;
+  ai_insights: {
+    visual_analysis: string;
+    historical_context: string;
+    artistic_interpretation: string;
+  };
+}
+
+interface NasaPhotosResponse {
+  photos: NasaPhoto[];
+  total_hits: number;
+}
+
+export const useNasaPhotos = (q: string) => {
+  return useInfiniteQuery<NasaPhotosResponse, Error, InfiniteData<NasaPhotosResponse>, [string, string], number>({
+    queryKey: ['nasa-photos', q],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await nasaApi.getNasaPhotos(q, pageParam);
+      return response.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      const totalFetched = allPages.reduce((acc, page) => acc + page.photos.length, 0);
+      if (totalFetched < lastPage.total_hits) {
+        return allPages.length + 1; // Next page number
+      }
+      return undefined;
+    },
+    enabled: !!q,
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    gcTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
   });
 }; 

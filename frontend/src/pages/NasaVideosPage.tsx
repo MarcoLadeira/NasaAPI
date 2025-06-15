@@ -154,17 +154,17 @@ const NasaVideosPage: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 via-nasa-blue to-gray-900 p-8 text-white shadow-xl space-bg">
-        <div className="relative z-10">
+      <header className="bg-nasa-blue text-white p-6 shadow-md">
+        <div className="container mx-auto">
           <div className="flex items-center space-x-3 mb-2">
-            <VideoCameraIcon className="h-8 w-8 text-nasa-red" />
+            <VideoCameraIcon className="h-8 w-8 text-white" />
             <h1 className="text-4xl font-bold tracking-tight text-white">NASA Videos</h1>
           </div>
-          <p className="text-gray-300 mt-2 max-w-2xl">
+          <p className="text-lg opacity-90 mt-2 max-w-2xl">
             Explore NASA's extensive video collection, from rocket launches to spacewalks, and discover the wonders of space exploration.
           </p>
         </div>
-      </div>
+      </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Search and Filters */}
@@ -286,16 +286,16 @@ const NasaVideosPage: React.FC = () => {
 
       {/* Video Modal */}
       {selectedVideo && (
-        <div className="fixed inset-0 bg-transparent z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-900 rounded-lg max-w-4xl w-full">
-            <div className="relative aspect-video">
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-900 rounded-lg max-w-4xl w-full flex flex-col max-h-[90vh]">
+            <div className="relative aspect-video flex-shrink-0">
               <video
                 src={selectedVideo.videoUrl}
                 controls
                 className="w-full h-full rounded-t-lg"
               />
             </div>
-            <div className="p-6">
+            <div className="p-6 flex-grow overflow-y-auto">
               <h2 className="text-2xl font-bold text-white mb-4">{selectedVideo.title}</h2>
               <p className="text-white mb-4">{selectedVideo.description}</p>
               <div className="grid grid-cols-2 gap-4 text-sm text-white">
@@ -319,7 +319,7 @@ const NasaVideosPage: React.FC = () => {
 
               {/* AI-Powered Insights Section - Moved here */}
               {showAIInsights && (
-                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-gray-700/50 mt-6">
+                <div className="bg-black/50 rounded-lg p-4 border border-gray-700/50 mt-6">
                   <h3 className="text-lg font-semibold text-white mb-4">AI-Powered Insights</h3>
                   <div className="space-y-4">
                     <div className="flex items-start space-x-2">
@@ -341,7 +341,7 @@ const NasaVideosPage: React.FC = () => {
                 </div>
               )}
             </div>
-            <div className="p-4 border-t border-gray-800 flex justify-end">
+            <div className="p-4 border-t border-gray-800 flex justify-end flex-shrink-0">
               <button
                 onClick={() => setSelectedVideo(null)}
                 className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors"
