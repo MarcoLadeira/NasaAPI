@@ -26,6 +26,10 @@ export const nasaApi = {
 
   // EPIC endpoints
   getEpicImages: (date: string) => api.get('/epic', { params: { date } }),
+
+  // NASA Videos endpoints
+  getNasaVideos: (query: string, page: number = 1, limit: number = 10) =>
+    api.get('/nasa-videos', { params: { query, page, limit } }),
 };
 
 export default api; 

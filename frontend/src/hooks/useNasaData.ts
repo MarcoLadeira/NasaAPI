@@ -43,4 +43,12 @@ export const useEpicImages = (date: string) => {
     queryFn: () => nasaApi.getEpicImages(date),
     enabled: !!date,
   });
+};
+
+export const useNasaVideos = (query: string, page: number = 1, limit: number = 10) => {
+  return useQuery({
+    queryKey: ['nasa-videos', query, page, limit],
+    queryFn: () => nasaApi.getNasaVideos(query, page, limit),
+    enabled: !!query,
+  });
 }; 

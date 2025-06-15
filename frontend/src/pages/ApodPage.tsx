@@ -8,12 +8,91 @@ import {
   ArrowDownTrayIcon,
   ClockIcon,
   UserIcon,
-  FilmIcon
+  FilmIcon,
+  Bars3Icon,
+  TagIcon,
+  LightBulbIcon,
+  FaceSmileIcon,
+  FaceFrownIcon,
+  InformationCircleIcon
 } from '@heroicons/react/24/outline';
 
 const ApodPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>('');
+  const [showFullExplanation, setShowFullExplanation] = useState<boolean>(false);
   const { data: apodData, isLoading, error, refetch } = useApod(selectedDate);
+
+  // Helper function to truncate text
+  const truncateText = (text: string, maxLength: number) => {
+    if (text.length <= maxLength) return text;
+    return text.slice(0, maxLength) + '...';
+  };
+
+  // Helper function to get related topics based on keywords in explanation
+  const getRelatedTopics = (explanation: string): string[] => {
+    const lowerCaseExplanation = explanation.toLowerCase();
+    const topics: string[] = [];
+
+    if (lowerCaseExplanation.includes('galaxy') || lowerCaseExplanation.includes('galaxies')) topics.push('Galaxies');
+    if (lowerCaseExplanation.includes('star') || lowerCaseExplanation.includes('stars')) topics.push('Stars');
+    if (lowerCaseExplanation.includes('nebula') || lowerCaseExplanation.includes('nebulae')) topics.push('Nebulae');
+    if (lowerCaseExplanation.includes('planet') || lowerCaseExplanation.includes('planets')) topics.push('Planets');
+    if (lowerCaseExplanation.includes('moon') || lowerCaseExplanation.includes('lunar')) topics.push('Moon');
+    if (lowerCaseExplanation.includes('sun') || lowerCaseExplanation.includes('solar')) topics.push('Sun');
+    if (lowerCaseExplanation.includes('black hole')) topics.push('Black Holes');
+    if (lowerCaseExplanation.includes('comet') || lowerCaseExplanation.includes('asteroid')) topics.push('Comets & Asteroids');
+    if (lowerCaseExplanation.includes('telescope')) topics.push('Telescopes');
+    if (lowerCaseExplanation.includes('observatory')) topics.push('Observatories');
+    if (lowerCaseExplanation.includes('mission') || lowerCaseExplanation.includes('spacecraft')) topics.push('Space Missions');
+
+    return topics;
+  };
+
+  // Helper function to suggest mood/theme based on title and explanation
+  const getMoodTheme = (title: string, explanation: string): string => {
+    const lowerCaseTitle = title.toLowerCase();
+    const lowerCaseExplanation = explanation.toLowerCase();
+
+    if (lowerCaseExplanation.includes('mystery') || lowerCaseTitle.includes('mystery') || lowerCaseExplanation.includes('unexplained')) return 'Mysterious';
+    if (lowerCaseExplanation.includes('beautiful') || lowerCaseTitle.includes('beautiful') || lowerCaseExplanation.includes('stunning') || lowerCaseExplanation.includes('gorgeous')) return 'Awe-Inspiring';
+    if (lowerCaseExplanation.includes('discovery') || lowerCaseTitle.includes('discovery') || lowerCaseExplanation.includes('research') || lowerCaseExplanation.includes('study')) return 'Educational';
+    if (lowerCaseExplanation.includes('future') || lowerCaseExplanation.includes('explore') || lowerCaseExplanation.includes('journey')) return 'Inspirational';
+    if (lowerCaseExplanation.includes('danger') || lowerCaseExplanation.includes('hazardous') || lowerCaseExplanation.includes('threat')) return 'Cautionary';
+
+    return 'Informative'; // Default theme
+  };
+
+  // Helper function for sentiment analysis
+  const getSentiment = (text: string): { sentiment: string; icon: React.ReactNode } => {
+    const lowerCaseText = text.toLowerCase();
+    let positiveScore = 0;
+    let negativeScore = 0;
+
+    // Positive keywords
+    const positiveKeywords = ['beautiful', 'stunning', 'amazing', 'fascinating', 'wonderful', 'impressive', 'exciting', 'gorgeous', 'captivating', 'insightful', 'discovery'];
+    // Negative keywords
+    const negativeKeywords = ['error', 'fail', 'unsuccessful', 'struggle', 'difficult', 'challenge', 'hazardous', 'threat'];
+
+    positiveKeywords.forEach(keyword => {
+      if (lowerCaseText.includes(keyword)) {
+        positiveScore++;
+      }
+    });
+
+    negativeKeywords.forEach(keyword => {
+      if (lowerCaseText.includes(keyword)) {
+        negativeScore++;
+      }
+    });
+
+    if (positiveScore > negativeScore) {
+      return { sentiment: 'Positive', icon: <FaceSmileIcon className="h-5 w-5 text-green-500" /> };
+    } else if (negativeScore > positiveScore) {
+      return { sentiment: 'Negative', icon: <FaceFrownIcon className="h-5 w-5 text-red-500" /> };
+    } else {
+      return { sentiment: 'Neutral', icon: <InformationCircleIcon className="h-5 w-5 text-gray-500" /> };
+    }
+  };
 
   // Reset to today's APOD when component mounts
   useEffect(() => {
@@ -40,7 +119,7 @@ const ApodPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="error-container">
+      <div>
         <ExclamationTriangleIcon className="h-6 w-6 mr-2" />
         <div>
           <h2 className="text-xl font-semibold mb-2">Error Loading APOD</h2>
@@ -63,8 +142,8 @@ const ApodPage: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 via-nasa-blue to-gray-900 p-8 text-white shadow-xl space-bg">
-        <div className="relative z-10">
+      <div className="relative overflow-hidden bg-gradient-to-r from-gray-900 via-nasa-blue to-gray-900 text-white space-bg">
+        <div className="relative z-10 p-8">
           <div className="flex items-center space-x-3 mb-2">
             <PhotoIcon className="h-8 w-8 text-nasa-red" />
             <h1 className="text-4xl font-bold tracking-tight">Astronomy Picture of the Day</h1>
@@ -75,7 +154,7 @@ const ApodPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-gray-200/50">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center space-x-2">
           <CalendarIcon className="h-5 w-5 text-gray-500" />
           <label htmlFor="date" className="text-sm font-medium text-gray-700">
@@ -97,7 +176,7 @@ const ApodPage: React.FC = () => {
 
       {apodData?.data && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="card group hover:scale-[1.02] transition-all duration-300">
+          <div className="group hover:scale-[1.02] transition-all duration-300">
             <NasaImage
               src={apodData.data.url}
               alt={apodData.data.title}
@@ -106,13 +185,13 @@ const ApodPage: React.FC = () => {
               date={apodData.data.date}
             />
           </div>
-          <div className="card space-y-6">
+          <div>
             <div className="flex items-center space-x-3 mb-6">
               <FilmIcon className="h-6 w-6 text-nasa-blue" />
               <h2 className="text-2xl font-bold text-gray-900">Image Details</h2>
             </div>
-            <dl className="space-y-6">
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+            <dl>
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
                   <ClockIcon className="h-5 w-5 text-gray-600" />
                   <dt className="text-sm font-medium text-gray-600">Date</dt>
@@ -125,7 +204,7 @@ const ApodPage: React.FC = () => {
                   })}
                 </dd>
               </div>
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
                   <UserIcon className="h-5 w-5 text-gray-600" />
                   <dt className="text-sm font-medium text-gray-600">Copyright</dt>
@@ -134,7 +213,7 @@ const ApodPage: React.FC = () => {
                   {apodData.data.copyright || 'Public Domain'}
                 </dd>
               </div>
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
                   <PhotoIcon className="h-5 w-5 text-gray-600" />
                   <dt className="text-sm font-medium text-gray-600">Media Type</dt>
@@ -143,8 +222,26 @@ const ApodPage: React.FC = () => {
                   {apodData.data.media_type}
                 </dd>
               </div>
+              {apodData.data.media_type === 'video' && (
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <FilmIcon className="h-5 w-5 text-purple-600" />
+                    <dt className="text-sm font-medium text-purple-600">Explore More Videos</dt>
+                  </div>
+                  <dd>
+                    <a
+                      href="https://images.nasa.gov/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-primary text-sm"
+                    >
+                      Visit NASA Image and Video Library
+                    </a>
+                  </dd>
+                </div>
+              )}
               {apodData.data.hdurl && (
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <ArrowDownTrayIcon className="h-5 w-5 text-blue-600" />
                     <dt className="text-sm font-medium text-blue-600">HD Version</dt>
@@ -162,6 +259,64 @@ const ApodPage: React.FC = () => {
                 </div>
               )}
             </dl>
+
+            <div className="mt-8">
+              <div className="flex items-center space-x-3 mb-6">
+                <Bars3Icon className="h-6 w-6 text-nasa-blue" />
+                <h2 className="text-2xl font-bold text-gray-900">Explanation</h2>
+              </div>
+              <p className="text-gray-700 leading-relaxed">
+                {showFullExplanation ? apodData.data.explanation : truncateText(apodData.data.explanation, 300)}
+              </p>
+              {apodData.data.explanation.length > 300 && (
+                <button
+                  onClick={() => setShowFullExplanation(!showFullExplanation)}
+                  className="text-nasa-blue hover:underline text-sm mt-2 focus:outline-none"
+                >
+                  {showFullExplanation ? 'Read Less' : 'Read More'}
+                </button>
+              )}
+            </div>
+
+            {apodData.data.explanation && getRelatedTopics(apodData.data.explanation).length > 0 && (
+              <div className="mt-8">
+                <div className="flex items-center space-x-3 mb-6">
+                  <TagIcon className="h-6 w-6 text-nasa-blue" />
+                  <h2 className="text-2xl font-bold text-gray-900">Related Space Topics</h2>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {getRelatedTopics(apodData.data.explanation).map((topic, index) => (
+                    <span key={index} className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium">
+                      {topic}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {apodData.data.title && apodData.data.explanation && (
+              <div className="mt-8">
+                <div className="flex items-center space-x-3 mb-6">
+                  <LightBulbIcon className="h-6 w-6 text-nasa-blue" />
+                  <h2 className="text-2xl font-bold text-gray-900">Suggested Mood/Theme</h2>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-sm font-medium">
+                  {getMoodTheme(apodData.data.title, apodData.data.explanation)}
+                </span>
+              </div>
+            )}
+
+            {apodData.data.explanation && (
+              <div className="mt-8">
+                <div className="flex items-center space-x-3 mb-6">
+                  {getSentiment(apodData.data.explanation).icon}
+                  <h2 className="text-2xl font-bold text-gray-900">Explanation Sentiment</h2>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-sm font-medium">
+                  {getSentiment(apodData.data.explanation).sentiment}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}

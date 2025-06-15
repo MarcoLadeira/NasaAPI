@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import NasaImage from '../components/NasaImage';
@@ -79,6 +79,61 @@ const MarsRoverPage: React.FC = () => {
   const [selectedRoverInfo, setSelectedRoverInfo] = useState<RoverInfo>(ROVERS[0]);
   const [selectedCamera, setSelectedCamera] = useState<string>('all');
 
+  const getCameraPurpose = (camera: string): string => {
+    switch (camera) {
+      case 'FHAZ': return 'Front Hazard Avoidance Camera: Used for navigation and obstacle detection.';
+      case 'RHAZ': return 'Rear Hazard Avoidance Camera: Used for navigation and obstacle detection.';
+      case 'MAST': return 'Mast Camera: Provides panoramic and stereoscopic images.';
+      case 'CHEMCAM': return 'Chemistry and Camera Complex: Analyzes the chemical composition of rocks and soil.';
+      case 'MAHLI': return 'Mars Hand Lens Imager: Microscopic imaging of rocks and soil.';
+      case 'MARDI': return 'Mars Descent Imager: Captures images during landing.';
+      case 'NAVCAM': return 'Navigation Camera: Used for navigation and broad terrain imaging.';
+      case 'PANCAM': return 'Panoramic Camera: Provides high-resolution panoramic images.';
+      case 'MINITES': return 'Miniature Thermal Emission Spectrometer: Analyzes thermal infrared spectra of surfaces.';
+      case 'all': return 'Displays photos from all available cameras.';
+      default: return 'Select a camera to see its purpose.';
+    }
+  };
+
+  const getRoverLegacyInsight = (rover: RoverInfo): string => {
+    if (rover.status === 'active') {
+      return `The ${rover.name} rover is currently active, continuing its mission to explore Mars.`
+    } else {
+      switch (rover.name) {
+        case 'Spirit': return 'Spirit\'s mission concluded after getting stuck, but it significantly advanced our understanding of Martian geology.';
+        case 'Opportunity': return 'Opportunity operated far beyond its expected lifespan, revealing incredible insights into Mars\' watery past.';
+        default: return 'This rover has completed its mission, providing valuable data for Mars exploration.';
+      }
+    }
+  };
+
+  // AI-like Feature: Smart Sol Suggestion
+  const getSmartSolSuggestion = (roverName: string): { sol: number; reason: string } => {
+    switch (roverName) {
+      case 'curiosity':
+        return { sol: 1000, reason: 'First discovery of ancient streambed sediments.' };
+      case 'perseverance':
+        return { sol: 50, reason: 'Early operations and first major flight of Ingenuity helicopter.' };
+      default:
+        return { sol: 1, reason: 'First day of operations on Mars.' };
+    }
+  };
+
+  // AI-like Feature: Predicted Photo Count
+  const getPredictedPhotoCount = (roverName: string, sol: number): string => {
+    // This is a simplified heuristic, not actual prediction based on real data patterns
+    if (roverName === 'curiosity') {
+      if (sol < 100) return 'Expected: Low (50-200)';
+      if (sol < 2000) return 'Expected: Medium (200-800)';
+      return 'Expected: High (800+)';
+    } else if (roverName === 'perseverance') {
+      if (sol < 50) return 'Expected: Low (30-150)';
+      if (sol < 500) return 'Expected: Medium (150-600)';
+      return 'Expected: High (600+)';
+    }
+    return 'Expected: Varies';
+  };
+
   const {
     data,
     isLoading,
@@ -127,13 +182,22 @@ const MarsRoverPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const handleSolChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleSolChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
-    if (!isNaN(value) && value >= 0) {
-      setSol(value);
-      setCurrentPage(1);
+
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
     }
-  };
+
+    debounceTimeoutRef.current = setTimeout(() => {
+      if (!isNaN(value) && value >= 0) {
+        setSol(value);
+        setCurrentPage(1);
+      }
+    }, 500); // Debounce for 500ms
+  }, []);
 
   const handleCameraChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedCamera(e.target.value);
@@ -172,24 +236,22 @@ const MarsRoverPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Select Rover
               </label>
-              <div className="relative">
-                <RocketLaunchIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                <select
-                  value={selectedRover}
-                  onChange={handleRoverChange}
-                  className="input pl-10"
-                >
-                  {ROVERS.map(rover => (
-                    <option key={rover.value} value={rover.value}>
-                      {rover.name} ({rover.status})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <select
+                value={selectedRover}
+                onChange={handleRoverChange}
+                className="input"
+              >
+                {ROVERS.map((rover) => (
+                  <option key={rover.value} value={rover.value}>
+                    {rover.name}
+                  </option>
+                ))}
+              </select>
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Sol (Martian Day)
+                Martian Day (Sol)
               </label>
               <div className="relative">
                 <CalendarIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -202,29 +264,27 @@ const MarsRoverPage: React.FC = () => {
                 />
               </div>
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Camera
               </label>
-              <div className="relative">
-                <CameraIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                <select
-                  value={selectedCamera}
-                  onChange={handleCameraChange}
-                  className="input pl-10"
-                >
-                  <option value="all">All Cameras</option>
-                  <option value="FHAZ">Front Hazard Avoidance Camera</option>
-                  <option value="RHAZ">Rear Hazard Avoidance Camera</option>
-                  <option value="MAST">Mast Camera</option>
-                  <option value="CHEMCAM">Chemistry and Camera Complex</option>
-                  <option value="MAHLI">Mars Hand Lens Imager</option>
-                  <option value="MARDI">Mars Descent Imager</option>
-                  <option value="NAVCAM">Navigation Camera</option>
-                  <option value="PANCAM">Panoramic Camera</option>
-                  <option value="MINITES">Miniature Thermal Emission Spectrometer</option>
-                </select>
-              </div>
+              <select
+                value={selectedCamera}
+                onChange={handleCameraChange}
+                className="input"
+              >
+                <option value="all">All Cameras</option>
+                <option value="FHAZ">Front Hazard Avoidance Camera</option>
+                <option value="RHAZ">Rear Hazard Avoidance Camera</option>
+                <option value="MAST">Mast Camera</option>
+                <option value="CHEMCAM">Chemistry and Camera Complex</option>
+                <option value="MAHLI">Mars Hand Lens Imager</option>
+                <option value="MARDI">Mars Descent Imager</option>
+                <option value="NAVCAM">Navigation Camera</option>
+                <option value="PANCAM">Panoramic Camera</option>
+                <option value="MINITES">Miniature Thermal Emission Spectrometer</option>
+              </select>
             </div>
           </div>
         </div>
@@ -256,6 +316,9 @@ const MarsRoverPage: React.FC = () => {
                       {selectedRoverInfo.status}
                     </span>
                   </div>
+                  <p className="text-sm text-gray-700 mt-2 italic">
+                    {getRoverLegacyInsight(selectedRoverInfo)}
+                  </p>
                   <div className="flex items-center justify-between p-4">
                     <div className="flex items-center space-x-2">
                       <ClockIcon className="h-5 w-5 text-gray-600" />

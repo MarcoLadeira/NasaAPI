@@ -42,6 +42,39 @@ const NeoPage: React.FC = () => {
 
   const { data: neoData, isLoading, error } = useNeoFeed(startDate, endDate);
 
+  // Function to determine risk level
+  const getRiskLevel = (neo: any) => {
+    const maxDiameter = neo.estimated_diameter.kilometers.estimated_diameter_max;
+    const missDistance = neo.close_approach_data[0]?.miss_distance.kilometers;
+
+    if (neo.is_potentially_hazardous_asteroid) {
+      if (maxDiameter > 0.5 && missDistance < 7500000) {
+        return <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">High Risk</span>;
+      } else if (maxDiameter > 0.1 && missDistance < 10000000) {
+        return <span className="px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">Medium Risk</span>;
+      } else {
+        return <span className="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">Potentially Hazardous</span>;
+      }
+    } else if (maxDiameter > 0.2 && missDistance < 5000000) {
+      return <span className="px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">Medium Risk</span>;
+    } else if (maxDiameter > 0.05 && missDistance < 15000000) {
+      return <span className="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">Low-Medium Risk</span>;
+    } else {
+      return <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">Low Risk</span>;
+    }
+  };
+
+  // Function to provide trajectory likelihood insight
+  const getTrajectoryInsight = (neo: any): string => {
+    if (neo.is_sentry_object) {
+      return 'Monitored by Sentry system for potential future impacts.';
+    } else if (neo.is_potentially_hazardous_asteroid) {
+      return 'Potentially hazardous, close monitoring advised.';
+    } else {
+      return 'No immediate impact threat identified.';
+    }
+  };
+
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setStartDate(e.target.value);
   };
@@ -357,23 +390,45 @@ const NeoPage: React.FC = () => {
                     )}
                   </div>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Total Objects</span>
-                      <span className="font-medium text-gray-900">{neoArray.length}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Potentially Hazardous</span>
-                      <span className="font-medium text-gray-900">{neoArray.filter((neo) => neo.is_potentially_hazardous_asteroid).length}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Largest Object</span>
-                      <span className="font-medium text-gray-900">{neoArray.reduce((largest, current) =>
-                        current.estimated_diameter.kilometers.estimated_diameter_max >
-                        largest.estimated_diameter.kilometers.estimated_diameter_max
-                          ? current
-                          : largest
-                      ).name}</span>
-                    </div>
+                    {neoArray.map((neo) => (
+                      <div key={neo.id} className="space-y-2 mb-4 p-4 border border-gray-200 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-gray-900">{neo.name}</span>
+                          {getRiskLevel(neo)}
+                        </div>
+                        <div className="flex items-center justify-between text-sm text-gray-700">
+                          <span>Est. Max Diameter:</span>
+                          <span>{neo.estimated_diameter.kilometers.estimated_diameter_max.toFixed(3)} km</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm text-gray-700">
+                          <span>Close Approach Date:</span>
+                          <span>{new Date(neo.close_approach_data[0]?.close_approach_date).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm text-gray-700">
+                          <span>Miss Distance:</span>
+                          <span>{parseInt(neo.close_approach_data[0]?.miss_distance.kilometers).toLocaleString()} km</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm text-gray-700">
+                          <span>Relative Velocity:</span>
+                          <span>{parseInt(neo.close_approach_data[0]?.relative_velocity.kilometers_per_hour).toLocaleString()} km/h</span>
+                        </div>
+                        <div className="text-sm text-gray-600 mt-2 italic">
+                          **Trajectory Insight:** {getTrajectoryInsight(neo)}
+                        </div>
+                        {neo.nasa_jpl_url && (
+                          <div className="flex justify-end mt-2">
+                            <a
+                              href={neo.nasa_jpl_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-nasa-blue hover:underline"
+                            >
+                              View JPL Data
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

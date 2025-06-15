@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { HomeIcon, PhotoIcon, GlobeAltIcon, ChartBarIcon } from '@heroicons/react/24/outline';
-import ApodPage from './pages/ApodPage';
-import MarsRoverPage from './pages/MarsRoverPage';
-import NeoPage from './pages/NeoPage';
-import EpicPage from './pages/EpicPage';
+import { HomeIcon, PhotoIcon, GlobeAltIcon, ChartBarIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
+
+const ApodPage = lazy(() => import('./pages/ApodPage'));
+const MarsRoverPage = lazy(() => import('./pages/MarsRoverPage'));
+const NeoPage = lazy(() => import('./pages/NeoPage'));
+const EpicPage = lazy(() => import('./pages/EpicPage'));
+const NasaVideosPage = lazy(() => import('./pages/NasaVideosPage'));
 
 const queryClient = new QueryClient();
 
@@ -67,6 +69,10 @@ const App: React.FC = () => {
                     <ChartBarIcon className="h-5 w-5" />
                     <span>EPIC</span>
                   </NavLink>
+                  <NavLink to="/nasa-videos">
+                    <VideoCameraIcon className="h-5 w-5" />
+                    <span>Videos</span>
+                  </NavLink>
                 </div>
 
                 <div className="md:hidden">
@@ -108,6 +114,10 @@ const App: React.FC = () => {
                     <ChartBarIcon className="h-5 w-5" />
                     <span>EPIC</span>
                   </NavLink>
+                  <NavLink to="/nasa-videos">
+                    <VideoCameraIcon className="h-5 w-5" />
+                    <span>Videos</span>
+                  </NavLink>
                 </div>
               </div>
             )}
@@ -115,12 +125,19 @@ const App: React.FC = () => {
 
           <main className="flex-grow container mx-auto px-4 py-8">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-6">
-              <Routes>
-                <Route path="/" element={<ApodPage />} />
-                <Route path="/mars-rover" element={<MarsRoverPage />} />
-                <Route path="/neo" element={<NeoPage />} />
-                <Route path="/epic" element={<EpicPage />} />
-              </Routes>
+              <Suspense fallback={(
+                <div className="flex items-center justify-center min-h-[60vh]">
+                  <div className="loading-spinner"></div>
+                </div>
+              )}>
+                <Routes>
+                  <Route path="/" element={<ApodPage />} />
+                  <Route path="/mars-rover" element={<MarsRoverPage />} />
+                  <Route path="/neo" element={<NeoPage />} />
+                  <Route path="/epic" element={<EpicPage />} />
+                  <Route path="/nasa-videos" element={<NasaVideosPage />} />
+                </Routes>
+              </Suspense>
             </div>
           </main>
 

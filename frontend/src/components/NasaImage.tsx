@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 
 interface NasaImageProps {
   src: string;
@@ -9,7 +9,7 @@ interface NasaImageProps {
   description?: string;
 }
 
-const NasaImage: React.FC<NasaImageProps> = ({
+const NasaImage: React.FC<NasaImageProps> = memo(({
   src,
   alt,
   className = '',
@@ -43,7 +43,7 @@ const NasaImage: React.FC<NasaImageProps> = ({
       {/* Loading state */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-12 h-12 border-4 border-nasa-blue border-t-transparent rounded-full animate-spin"></div>
+          <div data-testid="loading-spinner" className="w-12 h-12 border-4 border-nasa-blue border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
       
@@ -112,6 +112,6 @@ const NasaImage: React.FC<NasaImageProps> = ({
       )}
     </div>
   );
-};
+});
 
 export default NasaImage; 
