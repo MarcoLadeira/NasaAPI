@@ -1,0 +1,31 @@
+import axios from 'axios';
+
+const API_BASE_URL = 'http://localhost:3002/api';
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export const nasaApi = {
+  // APOD endpoints
+  getApod: () => api.get('/apod'),
+  getApodByDate: (date: string) => api.get(`/apod/date/${date}`),
+  getApodRange: (startDate: string, endDate: string) => 
+    api.get('/apod/range', { params: { start_date: startDate, end_date: endDate } }),
+
+  // Mars Rover Photos endpoints
+  getMarsPhotos: (rover: string, sol: number) => 
+    api.get('/mars-photos', { params: { rover, sol } }),
+
+  // NEO endpoints
+  getNeoFeed: (startDate: string, endDate: string) => 
+    api.get('/neo', { params: { start_date: startDate, end_date: endDate } }),
+
+  // EPIC endpoints
+  getEpicImages: (date: string) => api.get('/epic', { params: { date } }),
+};
+
+export default api; 
