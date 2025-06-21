@@ -25,6 +25,7 @@ const NasaImage: React.FC<NasaImageProps> = memo(({
   const [hasError, setHasError] = useState(false);
   const [imageSrc, setImageSrc] = useState(src);
   const [isHovered, setIsHovered] = useState(false);
+  const [isTouched, setIsTouched] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
@@ -38,11 +39,21 @@ const NasaImage: React.FC<NasaImageProps> = memo(({
     setImageSrc('/placeholder-image.jpg');
   };
 
+  const handleTouchStart = () => {
+    setIsTouched(true);
+  };
+
+  const handleTouchEnd = () => {
+    setTimeout(() => setIsTouched(false), 2000);
+  };
+
   return (
     <div 
       className="w-full relative group overflow-hidden"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Loading state */}
       {isLoading && (
@@ -57,7 +68,7 @@ const NasaImage: React.FC<NasaImageProps> = memo(({
         alt={alt}
         className={`w-full h-full object-cover transition-all duration-500 ${
           isLoading ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
-        } ${isHovered ? 'scale-105' : 'scale-100'} ${className}`}
+        } ${(isHovered || isTouched) ? 'scale-105' : 'scale-100'} ${className}`}
         onLoad={() => setIsLoading(false)}
         onError={handleError}
       />
@@ -67,34 +78,34 @@ const NasaImage: React.FC<NasaImageProps> = memo(({
         <div 
           className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent 
                      transition-all duration-300 ease-in-out
-                     ${isHovered ? 'opacity-100' : 'opacity-0'} flex flex-col justify-end`}
+                     ${(isHovered || isTouched) ? 'opacity-100' : 'opacity-0'} flex flex-col justify-end`}
         >
           <div 
             className={`relative p-4 text-white 
                        transition-all duration-300 ease-in-out
-                       ${isHovered ? 'translate-y-0' : 'translate-y-full'}`}
+                       ${(isHovered || isTouched) ? 'translate-y-0' : 'translate-y-full'}`}
           >
             {title && (
-              <h3 className="text-lg font-semibold mb-1 text-white">
+              <h3 className="text-base sm:text-lg font-semibold mb-1 text-white line-clamp-2">
                 {title}
               </h3>
             )}
             {date && (
-              <p className="text-sm text-gray-200 mb-2">
+              <p className="text-xs sm:text-sm text-gray-200 mb-2">
                 {date}
               </p>
             )}
             {description && (
-              <p className="text-sm text-gray-300 mb-4">
+              <p className="text-xs sm:text-sm text-gray-300 mb-4 line-clamp-3 sm:line-clamp-none">
                 {description}
               </p>
             )}
             {onDownload && (
               <button
                 onClick={onDownload}
-                className="w-full flex items-center justify-center px-4 py-2 bg-nasa-blue text-white rounded-lg hover:bg-nasa-blue/80 transition-colors"
+                className="w-full flex items-center justify-center px-3 py-1.5 sm:px-4 sm:py-2 bg-nasa-blue text-white rounded-lg hover:bg-nasa-blue/80 transition-colors text-sm sm:text-base"
               >
-                <ArrowDownTrayIcon className="h-5 w-5 mr-2" /> Download
+                <ArrowDownTrayIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" /> Download
               </button>
             )}
           </div>
@@ -105,7 +116,7 @@ const NasaImage: React.FC<NasaImageProps> = memo(({
       {hasError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <svg 
-            className="w-12 h-12 text-gray-400 mb-2" 
+            className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mb-2" 
             fill="none" 
             viewBox="0 0 24 24" 
             stroke="currentColor"
@@ -117,7 +128,7 @@ const NasaImage: React.FC<NasaImageProps> = memo(({
               d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" 
             />
           </svg>
-          <p className="text-gray-500 text-sm text-center">
+          <p className="text-gray-500 text-xs sm:text-sm text-center">
             Failed to load image
           </p>
         </div>

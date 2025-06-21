@@ -19,14 +19,14 @@
 
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-300 
+    @apply px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-medium transition-all duration-300 
            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-nasa-blue
            disabled:opacity-50 disabled:cursor-not-allowed
            transform hover:scale-105 active:scale-95;
   }
 
   .btn-primary {
-    @apply px-6 py-3 bg-nasa-blue text-white rounded-lg hover:bg-blue-700 transition-colors;
+    @apply px-4 py-2 md:px-6 md:py-3 bg-nasa-blue text-white rounded-lg hover:bg-blue-700 transition-colors;
   }
 
   .btn-secondary {
@@ -36,7 +36,7 @@
   }
 
   .input {
-    @apply w-full px-4 py-2 rounded-lg border border-gray-300 
+    @apply w-full px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-gray-300 
            focus:outline-none focus:ring-2 focus:ring-nasa-blue focus:border-transparent
            disabled:opacity-50 disabled:cursor-not-allowed
            transition-all duration-200 hover:border-gray-400
@@ -44,12 +44,12 @@
   }
 
   .card {
-    @apply bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-gray-200/50
+    @apply bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4 md:p-6 border border-gray-200/50
            transition-all duration-300 hover:shadow-xl hover:border-gray-300/50;
   }
 
   .nav-link {
-    @apply flex items-center space-x-2 px-4 py-2.5 rounded-lg text-sm font-medium 
+    @apply flex items-center space-x-1 md:space-x-2 px-3 py-2 md:px-4 md:py-2.5 rounded-lg text-sm font-medium 
            transition-all duration-300 hover:bg-white/5;
   }
 
@@ -65,34 +65,34 @@
   }
 
   .loading-spinner {
-    @apply w-12 h-12 border-4 border-nasa-blue border-t-transparent 
+    @apply w-8 h-8 md:w-12 md:h-12 border-4 border-nasa-blue border-t-transparent 
            rounded-full animate-spin;
   }
 
   .error-container {
     @apply bg-red-50/90 backdrop-blur-sm border border-red-200 text-red-700 
-           px-6 py-4 rounded-lg mb-6 flex items-center justify-center
+           px-4 py-3 md:px-6 md:py-4 rounded-lg mb-4 md:mb-6 flex items-center justify-center
            animate-fade-in;
   }
 
   .success-container {
     @apply bg-green-50/90 backdrop-blur-sm border border-green-200 text-green-700 
-           px-6 py-4 rounded-lg mb-6 flex items-center justify-center
+           px-4 py-3 md:px-6 md:py-4 rounded-lg mb-4 md:mb-6 flex items-center justify-center
            animate-fade-in;
   }
 
   .page-container {
     @apply bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl 
-           border border-gray-200/50 p-6;
+           border border-gray-200/50 p-4 md:p-6;
   }
 
   .section-title {
-    @apply text-3xl font-bold text-gray-900 mb-6
+    @apply text-2xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6
            bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent;
   }
 
   .form-group {
-    @apply space-y-2 mb-4;
+    @apply space-y-1 md:space-y-2 mb-3 md:mb-4;
   }
 
   .form-label {
@@ -100,7 +100,7 @@
   }
 
   .form-hint {
-    @apply text-sm text-gray-500 mt-1;
+    @apply text-xs md:text-sm text-gray-500 mt-1;
   }
 
   .space-bg {
@@ -152,6 +152,44 @@
 @keyframes scaleIn {
   from { transform: scale(0.95); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+/* 80s Shooting Star Animation */
+@keyframes shooting-star {
+  0% {
+    transform: translateX(0) translateY(0) rotate(var(--angle, 0deg));
+    opacity: 1;
+  }
+  15% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(-300px) translateY(-150px) rotate(var(--angle, 0deg));
+    opacity: 0;
+  }
+}
+
+@keyframes star-sparkle {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.animate-shooting-star {
+  animation: shooting-star 1.5s ease-out forwards;
+  --angle: 0deg;
+}
+
+.animate-star-sparkle {
+  animation: star-sparkle 0.8s ease-in-out infinite;
 }
 
 .animate-fade-in {

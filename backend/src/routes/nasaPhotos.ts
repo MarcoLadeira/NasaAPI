@@ -21,11 +21,19 @@ interface NasaPhotoItem {
 
 router.get('/', async (req, res) => {
   try {
-    const { q, page, media_type } = req.query;
+    const { q, page } = req.query;
     const nasaApiUrl = `https://images-api.nasa.gov/search?q=${q || 'apollo'}&media_type=image&page=${page || 1}`;
 
     const response = await axios.get(nasaApiUrl);
+
+    // Defensive check to prevent crashes if the API response structure is unexpected
+    if (!response.data || !response.data.collection || !Array.isArray(response.data.collection.items)) {
+      console.warn('Unexpected response structure from NASA Images API:', response.data);
+      return res.json({ photos: [], total_hits: 0 });
+    }
+    
     const items = response.data.collection.items;
+    const total_hits = response.data.collection.metadata?.total_hits || 0;
 
     // Process items to extract relevant photo data
     const photos = items.map((item: any) => {
@@ -55,11 +63,12 @@ router.get('/', async (req, res) => {
       };
     }).filter((photo: NasaPhotoItem) => photo.thumbnail_url !== undefined);
 
-    res.json({ photos, total_hits: response.data.collection.metadata.total_hits });
+    res.json({ photos, total_hits });
 
-  } catch (error) {
-    console.error('Error fetching NASA photos:', error);
-    res.status(500).json({ message: 'Error fetching NASA photos', error: error });
+  } catch (error: any) {
+    // Log the actual error for better debugging
+    console.error('Error fetching NASA photos:', error.message);
+    res.status(500).json({ message: 'Error fetching NASA photos', error: error.message });
   }
 });
 

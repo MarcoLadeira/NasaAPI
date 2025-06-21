@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useApod } from '../hooks/useNasaData';
+import { useApod } from '../hooks/useApod';
 import NasaImage from '../components/NasaImage';
 import { 
   CalendarIcon, 
@@ -163,26 +163,6 @@ const ApodPage: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center space-x-2">
-          <CalendarIcon className="h-5 w-5 text-gray-500" />
-          <label htmlFor="date" className="text-sm font-medium text-gray-700">
-            Select Date:
-          </label>
-        </div>
-        <div className="relative">
-          <CalendarIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-          <input
-            type="date"
-            id="date"
-            value={selectedDate || new Date().toISOString().split('T')[0]}
-            onChange={handleDateChange}
-            max={new Date().toISOString().split('T')[0]}
-            className="input pl-10"
-          />
-        </div>
-      </div>
-
       {apodData?.data && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="group hover:scale-[1.02] transition-all duration-300">
@@ -200,6 +180,23 @@ const ApodPage: React.FC = () => {
               <h2 className="text-2xl font-bold text-gray-900">Image Details</h2>
             </div>
             <dl>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2">
+                  <CalendarIcon className="h-5 w-5 text-gray-600" />
+                  <dt className="text-sm font-medium text-gray-600">Select Date</dt>
+                </div>
+                <dd className="relative">
+                  <input
+                    type="date"
+                    id="date"
+                    value={selectedDate || new Date().toISOString().split('T')[0]}
+                    onChange={handleDateChange}
+                    max={new Date().toISOString().split('T')[0]}
+                    className="input pl-3 pr-4 py-2 text-sm w-48"
+                  />
+                  <CalendarIcon className="h-5 w-5 text-gray-400 absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
+                </dd>
+              </div>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
                   <ClockIcon className="h-5 w-5 text-gray-600" />
@@ -250,7 +247,7 @@ const ApodPage: React.FC = () => {
                 </div>
               )}
               {apodData.data.hdurl && (
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
                     <ArrowDownTrayIcon className="h-5 w-5 text-blue-600" />
                     <dt className="text-sm font-medium text-blue-600">HD Version</dt>
@@ -267,76 +264,55 @@ const ApodPage: React.FC = () => {
                   </dd>
                 </div>
               )}
-
-              {/* Download Button */}
-              {apodData.data.media_type === 'image' && (
-                <div className="mt-6">
-                  <button
-                    onClick={handleDownloadImage}
-                    className="w-full px-4 py-2 bg-nasa-blue text-white rounded-lg hover:bg-nasa-blue/80 transition-colors flex items-center justify-center"
-                  >
-                    <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
-                    Download Image
-                  </button>
-                </div>
-              )}
             </dl>
 
-            <div className="mt-8">
-              <div className="flex items-center space-x-3 mb-6">
-                <Bars3Icon className="h-6 w-6 text-nasa-blue" />
-                <h2 className="text-2xl font-bold text-gray-900">Explanation</h2>
-              </div>
-              <p className="text-gray-700 leading-relaxed">
-                {showFullExplanation ? apodData.data.explanation : truncateText(apodData.data.explanation, 300)}
-              </p>
-              {apodData.data.explanation.length > 300 && (
-                <button
-                  onClick={() => setShowFullExplanation(!showFullExplanation)}
-                  className="text-nasa-blue hover:underline text-sm mt-2 focus:outline-none"
-                >
-                  {showFullExplanation ? 'Read Less' : 'Read More'}
-                </button>
-              )}
-            </div>
-
-            {apodData.data.explanation && getRelatedTopics(apodData.data.explanation).length > 0 && (
-              <div className="mt-8">
-                <div className="flex items-center space-x-3 mb-6">
-                  <TagIcon className="h-6 w-6 text-nasa-blue" />
-                  <h2 className="text-2xl font-bold text-gray-900">Related Space Topics</h2>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {getRelatedTopics(apodData.data.explanation).map((topic, index) => (
-                    <span key={index} className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium">
-                      {topic}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {apodData.data.title && apodData.data.explanation && (
-              <div className="mt-8">
-                <div className="flex items-center space-x-3 mb-6">
-                  <LightBulbIcon className="h-6 w-6 text-nasa-blue" />
-                  <h2 className="text-2xl font-bold text-gray-900">Suggested Mood/Theme</h2>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-sm font-medium">
-                  {getMoodTheme(apodData.data.title, apodData.data.explanation)}
-                </span>
-              </div>
-            )}
+            <button
+              onClick={handleDownloadImage}
+              className="btn-primary w-full mt-4 flex items-center justify-center space-x-2"
+            >
+              <ArrowDownTrayIcon className="h-5 w-5" />
+              <span>Download Image</span>
+            </button>
 
             {apodData.data.explanation && (
               <div className="mt-8">
-                <div className="flex items-center space-x-3 mb-6">
-                  {getSentiment(apodData.data.explanation).icon}
-                  <h2 className="text-2xl font-bold text-gray-900">Explanation Sentiment</h2>
+                <div className="flex items-center space-x-3 mb-4">
+                  <Bars3Icon className="h-6 w-6 text-nasa-blue" />
+                  <h2 className="text-2xl font-bold text-gray-900">Explanation</h2>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-sm font-medium">
-                  {getSentiment(apodData.data.explanation).sentiment}
-                </span>
+                <p className="text-gray-700 leading-relaxed">
+                  {showFullExplanation ? apodData.data.explanation : truncateText(apodData.data.explanation, 250)}
+                  {apodData.data.explanation.length > 250 && (
+                    <button
+                      onClick={() => setShowFullExplanation(!showFullExplanation)}
+                      className="text-nasa-blue font-semibold hover:underline ml-2"
+                    >
+                      {showFullExplanation ? 'Read Less' : 'Read More'}
+                    </button>
+                  )}
+                </p>
+
+                {/* AI Insights Section */}
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200 shadow-inner">
+                  <div className="flex items-center space-x-2 mb-3 text-blue-800">
+                    <LightBulbIcon className="h-5 w-5" />
+                    <h3 className="font-semibold">AI Insights</h3>
+                  </div>
+                  <div className="space-y-2 text-sm text-gray-700">
+                    <p className="flex items-center space-x-1">
+                      <TagIcon className="h-4 w-4 text-blue-600" />
+                      <span>Related Topics: {getRelatedTopics(apodData.data.explanation).join(', ') || 'N/A'}</span>
+                    </p>
+                    <p className="flex items-center space-x-1">
+                      {getSentiment(apodData.data.explanation).icon}
+                      <span>Sentiment: {getSentiment(apodData.data.explanation).sentiment}</span>
+                    </p>
+                    <p className="flex items-center space-x-1">
+                      <LightBulbIcon className="h-4 w-4 text-blue-600" />
+                      <span>Mood/Theme: {getMoodTheme(apodData.data.title, apodData.data.explanation)}</span>
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
