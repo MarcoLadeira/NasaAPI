@@ -33,8 +33,23 @@ if (!config.nasaApiKey) {
 const app = express();
 
 // CORS configuration
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://nasa-apiproject.vercel.app',
+  'https://nasa-apiproject-git-main-marcoladeiras-projects.vercel.app',
+  'https://nasa-apiproject-mpx1xbwvj-marcoladeiras-projects.vercel.app'
+];
+
 app.use(cors({
-  origin: 'http://localhost:3000', // Frontend URL
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
