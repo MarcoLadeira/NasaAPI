@@ -121,7 +121,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   res.status(500).json({
     error: 'Something went wrong!',
     message: config.nodeEnv === 'development' ? err.message : undefined
-  });
+  });//
 });
 
 app.listen(config.port, () => {
