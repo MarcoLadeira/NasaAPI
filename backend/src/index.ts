@@ -73,6 +73,25 @@ app.use(helmet({
 }));
 app.use(express.json());
 
+// Manual CORS middleware for Render and similar platforms
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+
+  // Handle preflight OPTIONS request directly
+  if (req.method === 'OPTIONS') {
+    console.log('Handling preflight for:', req.headers.origin);
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
 // Make config available to all routes
 app.use((req, res, next) => {
   req.app.locals.config = config;
