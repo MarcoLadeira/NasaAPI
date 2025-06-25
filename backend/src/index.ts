@@ -32,30 +32,33 @@ if (!config.nasaApiKey) {
 
 const app = express();
 
-// CORS configuration - ALLOW ONLY LOCALHOST AND VERCEL FRONTEND
-app.use(cors({
-  origin: function (origin, callback) {
-    console.log('Incoming request origin:', origin);
-    const allowedOrigins = [
-      'http://localhost:3002',
-      'https://nasa-apiproject.vercel.app'
-    ];
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3002',
+  'https://nasa-apiproject.vercel.app'
+];
 
-    // Allow all *.vercel.app if needed
-    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+const corsOptions = {
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    console.log('Request Origin:', origin); // Debug line
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.error('Blocked by CORS:', origin);
       callback(new Error('Not allowed by CORS'));
     }
-  }
-}));
+  },
+  credentials: true,
+};
 
 // Middleware
+app.use(cors(corsOptions));
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 app.use(express.json());
+
+// IMPORTANT: Add preflight handler
+app.options('*', cors(corsOptions));
 
 // Make config available to all routes
 app.use((req, res, next) => {
