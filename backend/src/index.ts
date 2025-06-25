@@ -38,27 +38,40 @@ const allowedOrigins = [
   'https://nasa-apiproject.vercel.app'
 ];
 
-const corsOptions = {
-  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-    console.log('Request Origin:', origin); // Debug line
-    if (!origin || allowedOrigins.includes(origin)) {
+const corsOptions: cors.CorsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin) return callback(null, true); // Allow non-browser clients like curl/postman
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      console.warn(`Blocked by CORS: ${origin}`);
+      callback(new Error(`CORS policy does not allow access from origin ${origin}`));
     }
   },
-  credentials: true,
+  credentials: true
 };
 
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "https://nasa-apiproject.vercel.app");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    next();
+  });
+  app.use(cors({
+    origin: 'https://nasa-apiproject.vercel.app',
+    credentials: true
+  }));
+} else {
+  app.use(cors(corsOptions));
+  app.options('*', cors(corsOptions));
+}
+
 // Middleware
-app.use(cors(corsOptions));
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 app.use(express.json());
-
-// IMPORTANT: Add preflight handler
-app.options('*', cors(corsOptions));
 
 // Make config available to all routes
 app.use((req, res, next) => {
