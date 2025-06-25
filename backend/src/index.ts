@@ -32,18 +32,20 @@ if (!config.nasaApiKey) {
 
 const app = express();
 
-// CORS configuration
+// CORS configuration - ALLOW ONLY LOCALHOST AND VERCEL FRONTEND
 const allowedOrigins = [
-  'http://localhost:3002', // Correct frontend port for local dev
-  'https://nasa-apiproject.vercel.app',
-  'https://nasa-apiproject-git-main-marcoladeiras-projects.vercel.app',
-  'https://nasa-apiproject-mpx1xbwvj-marcoladeiras-projects.vercel.app'
+  'http://localhost:3002',
+  'https://nasa-apiproject.vercel.app'
 ];
 
 app.use(cors({
-  origin: allowedOrigins,
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
 }));
 
 // Middleware
