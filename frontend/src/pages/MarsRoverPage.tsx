@@ -36,7 +36,7 @@ interface RoverInfo {
   image: string;
 }
 
-const API_URL = 'http://localhost:3002';
+const API_URL = 'http://localhost:3002/api';
 const PHOTOS_PER_PAGE = 12;
 
 const ROVERS: RoverInfo[] = [
@@ -84,7 +84,7 @@ const MarsRoverPage: React.FC = () => {
   } = useInfiniteQuery({
     queryKey: ['mars-photos', selectedRover, sol, selectedCamera],
     queryFn: async ({ pageParam = 1 }) => {
-      const response = await axios.get(`${API_URL}/api/mars-photos`, {
+      const response = await axios.get(`${API_URL}/mars-photos`, {
         params: {
           rover: selectedRover,
           sol,
