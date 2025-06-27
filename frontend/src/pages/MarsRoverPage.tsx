@@ -36,7 +36,7 @@ interface RoverInfo {
   image: string;
 }
 
-const API_URL = '/api';
+const API_URL = 'http://localhost:3002/api';
 const PHOTOS_PER_PAGE = 12;
 
 const ROVERS: RoverInfo[] = [
