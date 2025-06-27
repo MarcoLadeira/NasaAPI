@@ -31,11 +31,15 @@ if (!config.nasaApiKey) {
 const app = express();
 
 // === ✅ CLEAN AND DYNAMIC CORS ===
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:3002',
-  'https://nasa-apiproject.vercel.app'
-];
+// Read allowed origins from environment variable, fallback to defaults
+const allowedOrigins = (process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : [
+      'http://localhost:3000',
+      'http://localhost:3002',
+      'https://nasa-apiproject.vercel.app'
+    ]
+);
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
