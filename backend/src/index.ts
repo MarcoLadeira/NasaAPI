@@ -28,7 +28,7 @@ console.log('ALLOWED_ORIGINS from env:', process.env.ALLOWED_ORIGINS);
 // === ✅ CLEAN AND DYNAMIC CORS ===
 // Read allowed origins from environment variable, fallback to defaults
 const allowedOrigins = (process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
   : [
       'http://localhost:3000',
       'http://localhost:3002',
@@ -41,23 +41,34 @@ if (!config.nasaApiKey) {
   console.error('WARNING: NASA_API_KEY is not set in .env file!');
 }
 
-const app = express();
-
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    console.log('CORS check for origin:', origin);
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.warn(`Blocked by CORS: ${origin}`);
       callback(new Error(`CORS policy does not allow access from origin ${origin}`));
     }
   },
-  credentials: true
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 };
 
+const app = express();
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // pre-flight
+app.options('*', cors(corsOptions)); // Preflight support
+
+// Explicit OPTIONS handler for preflight requests
+app.options('*', (req, res) => {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  res.sendStatus(200);
+});
 
 // === ✅ SECURITY HEADERS ===
 app.use(helmet({
