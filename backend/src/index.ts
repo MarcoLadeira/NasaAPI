@@ -32,6 +32,7 @@ if (!config.nasaApiKey) {
 
 const app = express();
 
+// ✅ Unified CORS setup
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3002',
@@ -39,8 +40,8 @@ const allowedOrigins = [
 ];
 
 const corsOptions: cors.CorsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    if (!origin) return callback(null, true); // Allow non-browser clients like curl/postman
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // Allow non-browser clients
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -51,46 +52,15 @@ const corsOptions: cors.CorsOptions = {
   credentials: true
 };
 
-if (process.env.NODE_ENV === 'production') {
-  app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "https://nasa-apiproject.vercel.app");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    next();
-  });
-  app.use(cors({
-    origin: 'https://nasa-apiproject.vercel.app',
-    credentials: true
-  }));
-} else {
-  app.use(cors(corsOptions));
-  app.options('*', cors(corsOptions));
-}
+// ✅ Use CORS middleware once
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 app.use(express.json());
-
-// Manual CORS middleware for Render and similar platforms
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    res.header('Access-Control-Allow-Credentials', 'true');
-  }
-
-  // Handle preflight OPTIONS request directly
-  if (req.method === 'OPTIONS') {
-    console.log('Handling preflight for:', req.headers.origin);
-    return res.sendStatus(200);
-  }
-
-  next();
-});
 
 // Make config available to all routes
 app.use((req, res, next) => {
@@ -121,11 +91,11 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   res.status(500).json({
     error: 'Something went wrong!',
     message: config.nodeEnv === 'development' ? err.message : undefined
-  });//
+  });
 });
 
 app.listen(config.port, () => {
   console.log(`Server is running on port ${config.port}`);
   console.log(`NASA API Key: ${config.nasaApiKey ? 'configured' : 'not configured'}`);
   console.log(`Environment: ${config.nodeEnv}`);
-}); 
+});
