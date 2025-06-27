@@ -13,14 +13,12 @@ import nasaPhotosRouter from './routes/nasaPhotos';
 // Load environment variables
 dotenv.config();
 
-// Create a config object to share across the application
 const config = {
   nasaApiKey: process.env.NASA_API_KEY,
   port: Number(process.env.PORT) || 3002,
   nodeEnv: process.env.NODE_ENV || 'development'
 };
 
-// Debug: Check environment variables
 console.log('Environment variables loaded:');
 console.log('NASA_API_KEY:', config.nasaApiKey ? 'Configured' : 'Not configured');
 console.log('PORT:', config.port);
@@ -32,6 +30,7 @@ if (!config.nasaApiKey) {
 
 const app = express();
 
+// === ✅ CLEAN AND DYNAMIC CORS ===
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3002',
@@ -39,9 +38,8 @@ const allowedOrigins = [
 ];
 
 const corsOptions: cors.CorsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    if (!origin) return callback(null, true); // Allow tools like curl/postman
-    if (allowedOrigins.includes(origin)) {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       console.warn(`Blocked by CORS: ${origin}`);
@@ -51,53 +49,25 @@ const corsOptions: cors.CorsOptions = {
   credentials: true
 };
 
-if (process.env.NODE_ENV === 'production') {
-  app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "https://nasa-apiproject.vercel.app");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    next();
-  });
-  app.use(cors({
-    origin: 'https://nasa-apiproject.vercel.app',
-    credentials: true
-  }));
-} else {
-  app.use(cors(corsOptions));
-  app.options('*', cors(corsOptions));
-}
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // pre-flight
 
-// Middleware
+// === ✅ SECURITY HEADERS ===
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 app.use(express.json());
 
-// Manual CORS middleware for platforms like Render
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    res.header('Access-Control-Allow-Credentials', 'true');
-  }
+// === ❌ REMOVE MANUAL CORS HEADERS (you had conflicting logic) ===
+// app.use((req, res, next) => { ... }) ← Removed
 
-  if (req.method === 'OPTIONS') {
-    console.log('Handling preflight for:', req.headers.origin);
-    return res.sendStatus(200);
-  }
-
-  next();
-});
-
-// Make config available to all routes
+// === ✅ SET CONFIG ACCESSIBLE TO ROUTES ===
 app.use((req, res, next) => {
   req.app.locals.config = config;
   next();
 });
 
-// Routes
+// === ✅ ROUTES ===
 app.use('/api/mars-photos', marsPhotosRouter);
 app.use('/api/neo', neoRouter);
 app.use('/api/epic', epicRouter);
@@ -105,7 +75,7 @@ app.use('/api/apod', apodRouter);
 app.use('/api/nasa-videos', nasaVideosRouter);
 app.use('/api/nasa-photos', nasaPhotosRouter);
 
-// Health check endpoint
+// === ✅ HEALTH CHECK ===
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -114,7 +84,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Error handling middleware
+// === ✅ GLOBAL ERROR HANDLER ===
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Global error handler:', err);
   res.status(500).json({
@@ -123,7 +93,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   });
 });
 
-// Render.com port binding (important!)
+// === ✅ RENDER.COM PORT BINDING ===
 app.listen(config.port, '0.0.0.0', () => {
   console.log(`Server is running on http://0.0.0.0:${config.port}`);
   console.log(`NASA API Key: ${config.nasaApiKey ? 'configured' : 'not configured'}`);
