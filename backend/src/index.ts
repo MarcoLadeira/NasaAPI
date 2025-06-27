@@ -23,12 +23,7 @@ console.log('Environment variables loaded:');
 console.log('NASA_API_KEY:', config.nasaApiKey ? 'Configured' : 'Not configured');
 console.log('PORT:', config.port);
 console.log('NODE_ENV:', config.nodeEnv);
-
-if (!config.nasaApiKey) {
-  console.error('WARNING: NASA_API_KEY is not set in .env file!');
-}
-
-const app = express();
+console.log('ALLOWED_ORIGINS from env:', process.env.ALLOWED_ORIGINS);
 
 // === ✅ CLEAN AND DYNAMIC CORS ===
 // Read allowed origins from environment variable, fallback to defaults
@@ -40,6 +35,13 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS
       'https://nasa-apiproject.vercel.app'
     ]
 );
+console.log('allowedOrigins array:', allowedOrigins);
+
+if (!config.nasaApiKey) {
+  console.error('WARNING: NASA_API_KEY is not set in .env file!');
+}
+
+const app = express();
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
