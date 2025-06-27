@@ -36,7 +36,8 @@ interface RoverInfo {
   image: string;
 }
 
-const API_URL = 'http://localhost:3002/api';
+const API_URL = 'https://nasaapi-backend.onrender.com/api';
+
 const PHOTOS_PER_PAGE = 12;
 
 const ROVERS: RoverInfo[] = [
