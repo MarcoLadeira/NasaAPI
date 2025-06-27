@@ -32,7 +32,7 @@ const EpicPage: React.FC = () => {
   const { data: epicData, isLoading, error } = useQuery({
     queryKey: ['epic', selectedDate],
     queryFn: async () => {
-      const response = await axios.get<EpicImage[]>(`http://localhost:3002/api/epic?date=${selectedDate}`);
+      const response = await axios.get<EpicImage[]>(`/api/epic?date=${selectedDate}`);
       return response.data;
     },
     enabled: !!selectedDate,
