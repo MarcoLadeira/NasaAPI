@@ -4,18 +4,14 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files for both frontend and backend
-COPY backend/package*.json ./backend/
-COPY frontend/package*.json ./frontend/
+# Copy the entire project first
+COPY . .
 
 # Install backend dependencies
 RUN cd backend && npm ci --only=production
 
 # Install frontend dependencies and build
 RUN cd frontend && npm ci && npm run build
-
-# Copy the entire project
-COPY . .
 
 # Build backend TypeScript
 RUN cd backend && npm run build
