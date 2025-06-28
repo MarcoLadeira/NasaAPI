@@ -11,6 +11,6 @@ services:
       - key: PORT
         value: 3002
       - key: ALLOWED_ORIGINS
-        value: https://nasa-apiproject.vercel.app,http://localhost:3000
+        value: https://nasa-api-iu1l.vercel.app,https://nasa-apiproject.vercel.app,http://localhost:3000
       - key: NASA_API_KEY
         sync: false 
