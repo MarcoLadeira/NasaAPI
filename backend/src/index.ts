@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import path from 'path';
 import { config as appConfig } from './config';
 import { marsPhotosRouter } from './routes/marsPhotos';
 import { neoRouter } from './routes/neo';
@@ -44,7 +45,7 @@ if (config.nodeEnv === 'development' && allowedOrigins.length === 0) {
   allowedOrigins.push(
     'http://localhost:3000',
     'http://localhost:3002',
-    'https://nasa-apiproject.vercel.app'
+    'http://localhost:8080'
   );
 }
 
@@ -85,6 +86,9 @@ app.use(helmet({
 }));
 app.use(express.json());
 
+// Serve static files from the React app build
+app.use(express.static(path.join(__dirname, '../public')));
+
 // ✅ App config available to routes
 app.use((req, res, next) => {
   req.app.locals.config = config;
@@ -106,6 +110,11 @@ app.get('/health', (req, res) => {
     nasaApiKey: config.nasaApiKey ? 'configured' : 'not configured',
     environment: config.nodeEnv
   });
+});
+
+// ✅ Fallback route for React Router - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // ✅ Global error handler
