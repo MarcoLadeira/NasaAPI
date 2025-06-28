@@ -63,6 +63,12 @@ const corsOptions: cors.CorsOptions = {
     console.log('🌐 CORS request origin:', origin);
     console.log('📋 Allowed origins:', allowedOrigins);
     
+    // For unified deployment (frontend + backend on same domain), allow all origins
+    console.log(`✅ Allowing all origins for unified deployment: ${origin}`);
+    return callback(null, true);
+    
+    // ORIGINAL LOGIC (commented out for unified deployment):
+    /*
     if (!origin) {
       console.log('✅ Allowing request with no origin (server-to-server)');
       return callback(null, true);
@@ -76,6 +82,7 @@ const corsOptions: cors.CorsOptions = {
     console.warn(`❌ Blocked: ${origin}`);
     console.warn(`❌ Not in allowed origins: [${allowedOrigins.join(', ')}]`);
     return callback(new Error(`CORS policy does not allow origin ${origin}`));
+    */
   },
   credentials: true,
   optionsSuccessStatus: 200,
