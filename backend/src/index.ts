@@ -91,7 +91,29 @@ const corsOptions: cors.CorsOptions = {
 const app = express();
 app.use(cors(corsOptions));
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: [
+        "'self'",
+        "data:",
+        "https://images-assets.nasa.gov",
+        "https://mars.jpl.nasa.gov", 
+        "https://apod.nasa.gov",
+        "https://epic.gsfc.nasa.gov",
+        "https://*.nasa.gov",
+        "https://*.jpl.nasa.gov"
+      ],
+      connectSrc: ["'self'", "https://api.nasa.gov", "https://*.nasa.gov"],
+      fontSrc: ["'self'", "data:"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  }
 }));
 app.use(express.json());
 
