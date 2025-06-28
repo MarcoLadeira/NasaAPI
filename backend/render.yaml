@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: nasaapi-backend
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3002
+      - key: ALLOWED_ORIGINS
+        value: https://nasa-apiproject.vercel.app,http://localhost:3000
+      - key: NASA_API_KEY
+        sync: false 
