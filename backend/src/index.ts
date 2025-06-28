@@ -10,7 +10,7 @@ import { apodRouter } from './routes/apod';
 import { nasaVideosRouter } from './routes/nasaVideos';
 import nasaPhotosRouter from './routes/nasaPhotos';
 
-// Load environment variables
+// ✅ Load environment variables
 dotenv.config();
 
 const config = {
@@ -25,8 +25,7 @@ console.log('PORT:', config.port);
 console.log('NODE_ENV:', config.nodeEnv);
 console.log('ALLOWED_ORIGINS from env:', process.env.ALLOWED_ORIGINS);
 
-// === ✅ CLEAN AND DYNAMIC CORS ===
-// Read allowed origins from environment variable, fallback to defaults
+// ✅ Read allowed origins from env or fallback
 const allowedOrigins = (process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
   : [
@@ -41,10 +40,14 @@ if (!config.nasaApiKey) {
   console.error('WARNING: NASA_API_KEY is not set in .env file!');
 }
 
+// ✅ Correct CORS logic: echo origin
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+    console.log('CORS request origin:', origin);
+    if (!origin) {
+      callback(null, true); // allow non-browser tools like Postman
+    } else if (allowedOrigins.includes(origin)) {
+      callback(null, origin); // ✅ echo origin back!
     } else {
       callback(new Error(`CORS policy does not allow access from origin ${origin}`));
     }
@@ -56,36 +59,18 @@ const corsOptions: cors.CorsOptions = {
 
 const app = express();
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Preflight support
-
-// Explicit OPTIONS handler for preflight requests
-app.options('*', (req, res) => {
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-  }
-  res.sendStatus(200);
-});
-
-// === ✅ SECURITY HEADERS ===
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 app.use(express.json());
 
-// === ❌ REMOVE MANUAL CORS HEADERS (you had conflicting logic) ===
-// app.use((req, res, next) => { ... }) ← Removed
-
-// === ✅ SET CONFIG ACCESSIBLE TO ROUTES ===
+// ✅ App config available to routes
 app.use((req, res, next) => {
   req.app.locals.config = config;
   next();
 });
 
-// === ✅ ROUTES ===
+// ✅ Your API routes
 app.use('/api/mars-photos', marsPhotosRouter);
 app.use('/api/neo', neoRouter);
 app.use('/api/epic', epicRouter);
@@ -93,7 +78,7 @@ app.use('/api/apod', apodRouter);
 app.use('/api/nasa-videos', nasaVideosRouter);
 app.use('/api/nasa-photos', nasaPhotosRouter);
 
-// === ✅ HEALTH CHECK ===
+// ✅ Health check
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -102,7 +87,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// === ✅ GLOBAL ERROR HANDLER ===
+// ✅ Global error handler
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Global error handler:', err);
   res.status(500).json({
@@ -111,7 +96,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   });
 });
 
-// === ✅ RENDER.COM PORT BINDING ===
+// ✅ Start server
 app.listen(config.port, '0.0.0.0', () => {
   console.log(`Server is running on http://0.0.0.0:${config.port}`);
   console.log(`NASA API Key: ${config.nasaApiKey ? 'configured' : 'not configured'}`);
