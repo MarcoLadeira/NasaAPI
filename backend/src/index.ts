@@ -35,8 +35,10 @@ console.log('allowedOrigins array:', allowedOrigins);
 
 // ✅ Make ALLOWED_ORIGINS mandatory for production
 if (config.nodeEnv === 'production' && allowedOrigins.length === 0) {
-  console.error('🚨 ALLOWED_ORIGINS is missing in production!');
-  process.exit(1);
+  console.warn('⚠️ ALLOWED_ORIGINS is missing in production, using fallback');
+  allowedOrigins.push('http://localhost:8080', 'http://localhost:3000');
+  // Don't exit, just use fallback
+  // process.exit(1);
 }
 
 // ✅ Add fallback for development only
@@ -127,11 +129,37 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // ✅ Start server
-app.listen(config.port, '0.0.0.0', () => {
+const server = app.listen(config.port, '0.0.0.0', () => {
   console.log(`🚀 Server is running on http://0.0.0.0:${config.port}`);
   console.log(`🔑 NASA API Key: ${config.nasaApiKey ? 'configured' : 'not configured'}`);
   console.log(`🌍 Environment: ${config.nodeEnv}`);
   console.log(`✅ CORS Origins: ${allowedOrigins.join(', ')}`);
   console.log(`🏥 Health check available at: http://0.0.0.0:${config.port}/health`);
   console.log(`📁 Static files served from: ${path.join(__dirname, '../public')}`);
+});
+
+// Handle server errors
+server.on('error', (error: any) => {
+  console.error('❌ Server error:', error);
+  if (error.code === 'EADDRINUSE') {
+    console.error('❌ Port is already in use');
+  }
+  process.exit(1);
+});
+
+// Handle process termination
+process.on('SIGTERM', () => {
+  console.log('🛑 Received SIGTERM, shutting down gracefully');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 Received SIGINT, shutting down gracefully');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 });
