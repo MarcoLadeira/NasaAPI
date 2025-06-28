@@ -16,7 +16,7 @@ dotenv.config();
 
 const config = {
   nasaApiKey: process.env.NASA_API_KEY,
-  port: Number(process.env.PORT) || 3002,
+  port: Number(process.env.PORT) || 8080,
   nodeEnv: process.env.NODE_ENV || 'development'
 };
 
@@ -132,4 +132,6 @@ app.listen(config.port, '0.0.0.0', () => {
   console.log(`🔑 NASA API Key: ${config.nasaApiKey ? 'configured' : 'not configured'}`);
   console.log(`🌍 Environment: ${config.nodeEnv}`);
   console.log(`✅ CORS Origins: ${allowedOrigins.join(', ')}`);
+  console.log(`🏥 Health check available at: http://0.0.0.0:${config.port}/health`);
+  console.log(`📁 Static files served from: ${path.join(__dirname, '../public')}`);
 });
