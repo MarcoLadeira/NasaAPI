@@ -23,18 +23,32 @@ console.log('Environment variables loaded:');
 console.log('NASA_API_KEY:', config.nasaApiKey ? 'Configured' : 'Not configured');
 console.log('PORT:', config.port);
 console.log('NODE_ENV:', config.nodeEnv);
-console.log('ALLOWED_ORIGINS from env:', process.env.ALLOWED_ORIGINS);
+console.log('process.env.ALLOWED_ORIGINS:', process.env.ALLOWED_ORIGINS);
 
 // ✅ Read allowed origins from env or fallback
 const allowedOrigins = (process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
-  : [
-      'http://localhost:3000',
-      'http://localhost:3002',
-      'https://nasa-apiproject.vercel.app'
-    ]
+  : []
 );
 console.log('allowedOrigins array:', allowedOrigins);
+
+// ✅ Make ALLOWED_ORIGINS mandatory for production
+if (config.nodeEnv === 'production' && allowedOrigins.length === 0) {
+  console.error('🚨 ALLOWED_ORIGINS is missing in production!');
+  process.exit(1);
+}
+
+// ✅ Add fallback for development only
+if (config.nodeEnv === 'development' && allowedOrigins.length === 0) {
+  console.log('⚠️ No ALLOWED_ORIGINS set, using development fallback');
+  allowedOrigins.push(
+    'http://localhost:3000',
+    'http://localhost:3002',
+    'https://nasa-apiproject.vercel.app'
+  );
+}
+
+console.log('🚀 Final ALLOWED_ORIGINS:', allowedOrigins);
 
 if (!config.nasaApiKey) {
   console.error('WARNING: NASA_API_KEY is not set in .env file!');
@@ -43,18 +57,25 @@ if (!config.nasaApiKey) {
 // ✅ Correct CORS logic: echo origin
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    console.log('CORS request origin:', origin); // Debug!
+    console.log('🌐 CORS request origin:', origin);
+    console.log('📋 Allowed origins:', allowedOrigins);
+    
     if (!origin) {
-      callback(null, true); // OK for server-to-server calls
-    } else if (allowedOrigins.includes(origin)) {
-      callback(null, origin); // ✅ ✅ ✅ ECHO!
-    } else {
-      callback(new Error(`CORS policy does not allow access from origin ${origin}`));
+      console.log('✅ Allowing request with no origin (server-to-server)');
+      return callback(null, true);
     }
+    
+    if (allowedOrigins.includes(origin)) {
+      console.log(`✅ Allowed: ${origin}`);
+      return callback(null, origin);
+    }
+    
+    console.warn(`❌ Blocked: ${origin}`);
+    console.warn(`❌ Not in allowed origins: [${allowedOrigins.join(', ')}]`);
+    return callback(new Error(`CORS policy does not allow origin ${origin}`));
   },
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  optionsSuccessStatus: 200,
 };
 
 const app = express();
@@ -98,7 +119,8 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 
 // ✅ Start server
 app.listen(config.port, '0.0.0.0', () => {
-  console.log(`Server is running on http://0.0.0.0:${config.port}`);
-  console.log(`NASA API Key: ${config.nasaApiKey ? 'configured' : 'not configured'}`);
-  console.log(`Environment: ${config.nodeEnv}`);
+  console.log(`🚀 Server is running on http://0.0.0.0:${config.port}`);
+  console.log(`🔑 NASA API Key: ${config.nasaApiKey ? 'configured' : 'not configured'}`);
+  console.log(`🌍 Environment: ${config.nodeEnv}`);
+  console.log(`✅ CORS Origins: ${allowedOrigins.join(', ')}`);
 });

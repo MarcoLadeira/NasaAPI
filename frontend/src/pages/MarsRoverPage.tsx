@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import NasaImage from '../components/NasaImage';
+import { nasaApi } from '../services/api';
 import { 
   RocketLaunchIcon, 
   ExclamationTriangleIcon
@@ -36,7 +37,7 @@ interface RoverInfo {
   image: string;
 }
 
-const API_URL = 'https://nasaapi-backend.onrender.com/api';
+const API_URL = process.env.REACT_APP_API_BASE_URL || 'https://nasaapi-backend.onrender.com/api';
 
 const PHOTOS_PER_PAGE = 12;
 
