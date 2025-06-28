@@ -43,11 +43,11 @@ if (!config.nasaApiKey) {
 // ✅ Correct CORS logic: echo origin
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    console.log('CORS request origin:', origin);
+    console.log('CORS request origin:', origin); // Debug!
     if (!origin) {
-      callback(null, true); // allow non-browser tools like Postman
+      callback(null, true); // OK for server-to-server calls
     } else if (allowedOrigins.includes(origin)) {
-      callback(null, origin); // ✅ echo origin back!
+      callback(null, origin); // ✅ ✅ ✅ ECHO!
     } else {
       callback(new Error(`CORS policy does not allow access from origin ${origin}`));
     }
