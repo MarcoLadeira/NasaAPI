@@ -60,12 +60,6 @@ const corsOptions: cors.CorsOptions = {
     console.log('🌐 CORS request origin:', origin);
     console.log('📋 Allowed origins:', allowedOrigins);
     
-    // TEMPORARY: Allow all origins for testing
-    console.log(`✅ Allowing all origins temporarily: ${origin}`);
-    return callback(null, true);
-    
-    // ORIGINAL LOGIC (commented out for now):
-    /*
     if (!origin) {
       console.log('✅ Allowing request with no origin (server-to-server)');
       return callback(null, true);
@@ -79,7 +73,6 @@ const corsOptions: cors.CorsOptions = {
     console.warn(`❌ Blocked: ${origin}`);
     console.warn(`❌ Not in allowed origins: [${allowedOrigins.join(', ')}]`);
     return callback(new Error(`CORS policy does not allow origin ${origin}`));
-    */
   },
   credentials: true,
   optionsSuccessStatus: 200,
